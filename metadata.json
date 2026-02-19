@@ -1,0 +1,9 @@
+{
+  "name": "ReduceMyInsurance.Net",
+  "description": "A fully automated AI-powered independent insurance agency platform for instant quotes, policy management, and intelligent risk assessment.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
