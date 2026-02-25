@@ -48,19 +48,25 @@ import GeneralLiabilityPage from './components/GeneralLiabilityPage';
 import WorkersCompPage from './components/WorkersCompPage';
 import CommercialAutoPage from './components/CommercialAutoPage';
 import BusinessOwnersPage from './components/BusinessOwnersPage';
+import InsureTaxPage from './components/InsureTaxPage';
 import { ProfileEditModal } from './components/ProfileEditModal';
+
+import KickoffPage from './components/KickoffPage';
+import ArkayWarrantyPage from './components/ArkayWarrantyPage';
+import ChoiceWarrantyPage from './components/ChoiceWarrantyPage';
+import HomeSecurityPage from './components/HomeSecurityPage';
 
 const NavItem: React.FC<{ to: string, icon: any, label: string, active: boolean }> = ({ to, icon: Icon, label, active }) => (
   <Link 
     to={to} 
-    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ${
+    className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-300 ${
       active 
       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
       : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
     }`}
   >
-    <Icon className={`w-5 h-5 ${active ? 'animate-pulse' : ''}`} />
-    <span className="font-medium text-sm">{label}</span>
+    <Icon className={`w-4 h-4 ${active ? 'animate-pulse' : ''}`} />
+    <span className="font-medium text-xs lg:text-sm">{label}</span>
   </Link>
 );
 
@@ -80,20 +86,21 @@ const Header: React.FC<{ user: any; onLogout: () => void; onEditProfile: () => v
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] p-6">
-      <nav className="max-w-6xl mx-auto glass rounded-3xl px-8 py-3 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-[100] p-4 lg:p-6">
+      <nav className="max-w-7xl mx-auto glass rounded-3xl px-6 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group shrink-0">
           <div className="flex items-center gap-2 bg-blue-500/10 p-2 rounded-xl border border-blue-500/20 group-hover:bg-blue-500/20 transition-all">
             <Shield className="w-6 h-6 text-blue-500 fill-blue-500/20" />
           </div>
           <div className="flex items-baseline gap-0.5 whitespace-nowrap">
-            <span className="font-heading font-bold text-white text-lg tracking-tight">ReduceMyInsurance</span>
+            <span className="font-heading font-bold text-white text-lg tracking-tight hidden sm:inline">ReduceMyInsurance</span>
+            <span className="font-heading font-bold text-white text-lg tracking-tight sm:hidden">RMI</span>
             <span className="text-sm text-blue-400 font-bold tracking-widest">.Net</span>
           </div>
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center space-x-2">
+        <div className="hidden xl:flex items-center gap-1">
           {navLinks.map((link) => (
             <NavItem 
               key={link.name} 
@@ -105,7 +112,7 @@ const Header: React.FC<{ user: any; onLogout: () => void; onEditProfile: () => v
           ))}
         </div>
 
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden xl:flex items-center gap-4">
           <div className="h-8 w-[1px] bg-white/10 mx-1"></div>
           {user ? (
             <div className="flex items-center gap-4">
@@ -129,14 +136,14 @@ const Header: React.FC<{ user: any; onLogout: () => void; onEditProfile: () => v
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button className="lg:hidden p-2 text-white" onClick={() => setIsOpen(!isOpen)}>
+        <button className="xl:hidden p-2 text-white" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X /> : <Menu />}
         </button>
       </nav>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="lg:hidden absolute top-24 left-6 right-6 glass rounded-3xl shadow-2xl p-6 space-y-4 animate-in fade-in slide-in-from-top-4">
+        <div className="xl:hidden absolute top-24 left-6 right-6 glass rounded-3xl shadow-2xl p-6 space-y-4 animate-in fade-in slide-in-from-top-4">
           {navLinks.map((link) => (
             <Link
               key={link.name}
@@ -223,8 +230,8 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           <Route path="/" element={<LandingPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/apply" element={<QuoteForm />} />
-          <Route path="/tools" element={<AIToolsPage />} />
-          <Route path="/tools/inspection" element={<AIHomeInspection />} />
+          <Route path="/tools" element={<ProtectedRoute user={user}><AIToolsPage /></ProtectedRoute>} />
+          <Route path="/tools/inspection" element={<ProtectedRoute user={user}><AIHomeInspection /></ProtectedRoute>} />
           <Route path="/carriers" element={<CarrierNetwork />} />
           <Route path="/carrier/:slug" element={<CarrierPage />} />
           
@@ -247,6 +254,7 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           <Route path="/bonds" element={<BondsPage />} />
           <Route path="/sports" element={<SportsInsurancePage />} />
           <Route path="/financial" element={<FinancialPage />} />
+          <Route path="/insure-tax" element={<InsureTaxPage />} />
           <Route path="/sell-car" element={<SellCarPage />} />
           <Route path="/safety-course" element={<SafetyCoursePage />} />
           <Route path="/service" element={<ServiceCenter />} />
@@ -255,6 +263,10 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           <Route path="/dental-vision" element={<DentalPage />} />
           <Route path="/disability" element={<DisabilityPage />} />
           <Route path="/life" element={<LifePage />} />
+          <Route path="/kickoff" element={<KickoffPage />} />
+          <Route path="/arkay-warranty" element={<ArkayWarrantyPage />} />
+          <Route path="/choice-warranty" element={<ChoiceWarrantyPage />} />
+          <Route path="/home-security" element={<HomeSecurityPage />} />
           
           {/* New Industry Routes */}
           <Route path="/industries" element={<IndustryIndex />} />
@@ -320,9 +332,7 @@ const App: React.FC = () => {
 
   const handleProfileUpdate = (updatedUser: any) => {
     setUser(updatedUser);
-    if (updatedUser.uid) {
-      dbService.saveUserProfile(updatedUser.uid, updatedUser);
-    }
+    // ProfileEditModal handles the DB save now to ensure better error handling
   };
 
   return (

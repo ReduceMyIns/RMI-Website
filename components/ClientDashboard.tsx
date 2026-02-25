@@ -8,6 +8,7 @@ import { nowCertsApi } from '../services/nowCertsService';
 import { getCarrierServiceLevel } from '../services/config';
 import { dbService } from '../services/dbService';
 import { extractPolicyData } from '../services/geminiService';
+import { generateDecPage, generateAutoIdCard } from '../services/pdfGenerator';
 import NowCertsIframe from './NowCertsIframe';
 
 // ... (Existing SERVICES array and helper functions remain same) ...
@@ -59,8 +60,323 @@ const StatCard: React.FC<{ icon: any, label: string, val: string, sub: string, c
 // ... (PolicyDetailModal remains same) ...
 // (Omitting PolicyDetailModal re-paste for brevity, assumes it exists from original file)
 const PolicyDetailModal: React.FC<{ policy: any; onClose: () => void }> = ({ policy, onClose }) => {
-    // ... logic ...
-    return <div onClick={onClose} className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"><div className="text-white">Policy Detail Placeholder (Full impl in previous file)</div></div>;
+    const [details, setDetails] = useState<{ vehicles: any[], drivers: any[], properties: any[], coverages: any[], files: any[] }>({
+        vehicles: [],
+        drivers: [],
+        properties: [],
+        coverages: [],
+        files: []
+    });
+    const [loading, setLoading] = useState(true);
+    const [downloading, setDownloading] = useState(false);
+
+    useEffect(() => {
+        const fetchDetails = async () => {
+            try {
+                const [v, d, p, c, f] = await Promise.all([
+                    nowCertsApi.getPolicyVehicles(policy.databaseId),
+                    nowCertsApi.getPolicyDrivers(policy.databaseId),
+                    nowCertsApi.getPolicyProperties(policy.databaseId),
+                    nowCertsApi.getPolicyCoverages(policy.databaseId),
+                    nowCertsApi.getPolicyFiles(policy.databaseId, policy.insuredDatabaseId)
+                ]);
+                setDetails({ 
+                    vehicles: v || [], 
+                    drivers: d || [], 
+                    properties: p || [],
+                    coverages: c || [],
+                    files: f?.data?.files || []
+                });
+            } catch (e) {
+                console.error("Error fetching policy details", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDetails();
+    }, [policy.databaseId, policy.insuredDatabaseId]);
+
+    const handleDownloadDecPage = async () => {
+        setDownloading(true);
+        try {
+            // Generate PDF from API data
+            generateDecPage(policy, details);
+        } catch (e) {
+            console.error("Download failed", e);
+            alert("Failed to generate document.");
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const handleDownloadIdCards = async () => {
+        setDownloading(true);
+        try {
+            generateAutoIdCard(policy, details);
+        } catch (e) {
+            console.error("ID Card generation failed", e);
+            alert("Failed to generate ID Cards.");
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const showIdCardButton = () => {
+        const type = (policy.lineOfBusinesses?.[0]?.lineOfBusinessName || '').toLowerCase();
+        return type.includes('auto') || type.includes('vehicle') || type.includes('water') || type.includes('boat') || type.includes('rv') || type.includes('recreation');
+    };
+
+    return (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-4xl glass-card rounded-[2.5rem] border-white/10 overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-in zoom-in-95 duration-300">
+                {/* Header */}
+                <div className="p-8 border-b border-white/10 flex justify-between items-start bg-white/5">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-3xl font-heading font-bold text-white tracking-tight">
+                                {policy.lineOfBusinesses?.[0]?.lineOfBusinessName || 'Policy Detail'}
+                            </h2>
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                                isPolicyActive(policy) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}>
+                                {policy.status || (isPolicyActive(policy) ? 'Active' : 'Inactive')}
+                            </span>
+                        </div>
+                        <p className="text-slate-400 font-medium">{policy.carrierName} • <span className="font-mono">{policy.number}</span></p>
+                    </div>
+                    <button onClick={onClose} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-grow overflow-y-auto p-8 space-y-10 custom-scrollbar">
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Premium</div>
+                            <div className="text-2xl font-bold text-white">${policy.totalPremium?.toFixed(2)}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Effective</div>
+                            <div className="text-xl font-bold text-slate-200">{new Date(policy.effectiveDate).toLocaleDateString()}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expiration</div>
+                            <div className="text-xl font-bold text-slate-200">{new Date(policy.expirationDate).toLocaleDateString()}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Term</div>
+                            <div className="text-xl font-bold text-slate-200">12 Months</div>
+                        </div>
+                    </div>
+
+                    {loading ? (
+                        <div className="py-20 flex flex-col items-center justify-center gap-4">
+                            <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Retrieving Asset Data...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-10">
+                            {/* Coverages Section */}
+                            {(details.coverages.length > 0 || (details.vehicles.length > 0 && details.vehicles[0].policyLevelCoverages?.length > 0)) && (
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Shield className="w-5 h-5 text-emerald-400" /> Coverage Details
+                                    </h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {details.coverages.length > 0 ? details.coverages.map((covGroup: any, i: number) => (
+                                            <div key={i} className="space-y-2">
+                                                {Object.keys(covGroup).map(key => {
+                                                    if (Array.isArray(covGroup[key]) && covGroup[key].length > 0) {
+                                                        return covGroup[key].map((c: any, idx: number) => (
+                                                            <div key={idx} className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center">
+                                                                <div>
+                                                                    <div className="font-bold text-white text-sm">{c.coverageDescriptionFirst || c.name || key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                                                                    <div className="text-xs text-slate-500">{c.limitAmountFirst || c.limit || c.limitFormatted || 'Included'}</div>
+                                                                </div>
+                                                                {(c.deductible || c.deductibleAmountFirst) && (
+                                                                    <div className="text-right">
+                                                                        <div className="text-[10px] text-slate-500 uppercase">Deductible</div>
+                                                                        <div className="font-mono text-white text-sm">{c.deductible || c.deductibleAmountFirst}</div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ));
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
+                                        )) : (
+                                            /* Fallback for Auto Policy Level Coverages from Vehicle */
+                                            details.vehicles[0].policyLevelCoverages.map((c: any, idx: number) => (
+                                                <div key={idx} className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center">
+                                                    <div>
+                                                        <div className="font-bold text-white text-sm">{c.name}</div>
+                                                        <div className="text-xs text-slate-500">{c.limitFormatted || 'Included'}</div>
+                                                    </div>
+                                                    {c.deductiblesFormatted && (
+                                                        <div className="text-right">
+                                                            <div className="text-[10px] text-slate-500 uppercase">Deductible</div>
+                                                            <div className="font-mono text-white text-sm">{c.deductiblesFormatted}</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Properties with Construction Details */}
+                            {details.properties.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Home className="w-5 h-5 text-emerald-400" /> Insured Properties
+                                    </h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {details.properties.map((p: any, i: number) => (
+                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400">
+                                                        <Home className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-white">{p.addressLine1}</div>
+                                                        <div className="text-xs text-slate-500">{p.city}, {p.state} {p.zipCode}</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Construction Details from XML or fields if available */}
+                                                {p.coverages && p.coverages.length > 0 && (
+                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                                                        {p.coverages.map((c: any, idx: number) => (
+                                                            <div key={idx} className="flex justify-between text-xs">
+                                                                <span className="text-slate-500">{c.name}</span>
+                                                                <span className="text-white font-mono">{c.limitFormatted || c.limits?.[0]}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Lienholders */}
+                                                {p.lienHolders && p.lienHolders.length > 0 && (
+                                                    <div className="pt-2 border-t border-white/5">
+                                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Lienholders</div>
+                                                        {p.lienHolders.map((lh: any, idx: number) => (
+                                                            <div key={idx} className="text-xs text-slate-300 mb-1">
+                                                                {lh.name} <span className="text-slate-600">({lh.natureOfInterestDescriptionValue || 'Lienholder'})</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Vehicles */}
+                            {details.vehicles.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Car className="w-5 h-5 text-blue-400" /> Insured Vehicles
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {details.vehicles.map((v: any, i: number) => (
+                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400">
+                                                        <Car className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-white">{v.year} {v.make} {v.model}</div>
+                                                        <div className="text-xs font-mono text-slate-500">{v.vin || 'VIN NOT ON FILE'}</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Vehicle Specific Coverages */}
+                                                {v.vehicleSpecificCoverages && v.vehicleSpecificCoverages.length > 0 && (
+                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 w-full">
+                                                        {v.vehicleSpecificCoverages.map((c: any, idx: number) => (
+                                                            <div key={idx} className="flex justify-between text-xs">
+                                                                <span className="text-slate-500">{c.name || c.coverageDesc}</span>
+                                                                <span className="text-white font-mono">
+                                                                    {c.limitFormatted || (c.deductiblesFormatted ? `Ded: ${c.deductiblesFormatted}` : 'Included')}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Drivers */}
+                            {details.drivers.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-indigo-400" /> Rated Drivers
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {details.drivers.map((d: any, i: number) => (
+                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                                                    <Users className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-white">{d.firstName} {d.lastName}</div>
+                                                    <div className="text-xs text-slate-500 uppercase tracking-widest">Driver License: {d.dlNumber || 'Pending'}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {details.vehicles.length === 0 && details.drivers.length === 0 && details.properties.length === 0 && details.coverages.length === 0 && (
+                                <div className="py-10 text-center glass-card rounded-2xl border-dashed border-white/10 text-slate-500 italic">
+                                    No specific asset details found for this policy.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-8 border-t border-white/10 bg-white/5 flex gap-4">
+                    <button 
+                        onClick={handleDownloadDecPage} 
+                        disabled={downloading}
+                        className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {downloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                        Download Dec Page
+                    </button>
+                    
+                    {showIdCardButton() && (
+                        <button 
+                            onClick={handleDownloadIdCards}
+                            disabled={downloading}
+                            className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {downloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+                            Download ID Cards
+                        </button>
+                    )}
+
+                    <button 
+                        onClick={onClose}
+                        className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-bold transition-all"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 const ClientDashboard: React.FC = () => {

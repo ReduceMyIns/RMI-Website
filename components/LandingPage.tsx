@@ -2,6 +2,7 @@
 import React from 'react';
 import { ArrowRight, Sparkles, Shield, Zap, TrendingDown, Users, Play, Globe, CheckCircle2, Bot, Server, Box, Umbrella, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CarrierSlider from './CarrierSlider';
 
 const LandingPage: React.FC = () => {
   return (
@@ -66,6 +67,8 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <CarrierSlider />
 
       {/* Products & Solutions Hero */}
       <section className="px-6" id="products">

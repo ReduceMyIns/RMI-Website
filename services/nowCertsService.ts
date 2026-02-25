@@ -125,35 +125,27 @@ export const nowCertsApi = {
     try {
       const token = await this.getAccessToken();
       let filter = "";
-      const email = query.email?.trim().toLowerCase();
+      const email = query.email?.trim();
       const rawPhone = query.phone?.replace(/\D/g, '') || '';
-      const name = query.name?.trim();
       
-      if (email) {
-        filter = `$filter=(contains(tolower(eMail), '${email}') or contains(tolower(eMail2), '${email}') or contains(tolower(eMail3), '${email}'))`;
-      } else if (rawPhone) {
-        const formatted = rawPhone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-        filter = `$filter=(contains(phone, '${formatted}') or contains(cellPhone, '${formatted}') or contains(smsPhone, '${formatted}') or contains(phone, '${rawPhone}') or contains(cellPhone, '${rawPhone}') or contains(smsPhone, '${rawPhone}'))`;
-      } else if (name) {
-        // Advanced Name Matching: Split full name into First/Last for accurate OData filtering
-        const parts = name.split(/\s+/).filter(part => part.length > 0);
-        
-        if (parts.length >= 2) {
-          const firstName = parts[0].replace(/'/g, "''").toLowerCase();
-          // Join the remaining parts for Last Name to handle multi-word surnames
-          const lastName = parts.slice(1).join(' ').replace(/'/g, "''").toLowerCase();
-          
-          // Require matches in BOTH fields
-          filter = `$filter=(contains(tolower(firstName), '${firstName}') and contains(tolower(lastName), '${lastName}'))`;
-        } else {
-          // Single word input: search in either First OR Last
-          const safeName = name.replace(/'/g, "''").toLowerCase();
-          filter = `$filter=contains(tolower(firstName), '${safeName}') or contains(tolower(lastName), '${safeName}')`;
-        }
+      // Format phone as ###-###-#### for API search if possible, or just search raw if API supports it. 
+      // The prompt example uses ###-###-####.
+      const formattedPhone = rawPhone.length === 10 
+        ? `${rawPhone.slice(0, 3)}-${rawPhone.slice(3, 6)}-${rawPhone.slice(6)}` 
+        : rawPhone;
+
+      if (email && formattedPhone) {
+         filter = `$filter=(contains(phone, '${formattedPhone}') or contains(cellPhone, '${formattedPhone}') or contains(smsPhone, '${formattedPhone}')) or (contains(eMail, '${email}') or contains(eMail2, '${email}') or contains(eMail3, '${email}'))`;
+      } else if (email) {
+        filter = `$filter=(contains(eMail, '${email}') or contains(eMail2, '${email}') or contains(eMail3, '${email}'))`;
+      } else if (formattedPhone) {
+        filter = `$filter=(contains(phone, '${formattedPhone}') or contains(cellPhone, '${formattedPhone}') or contains(smsPhone, '${formattedPhone}'))`;
       }
 
       const endpoint = "/api/InsuredList";
-      const url = `${BASE_URL}${endpoint}?${encodeURI(filter)}&$orderby=type asc&$count=true&$top=10`;
+      // The prompt example uses InsuredList() but the standard is usually without () or with. Let's try to match the prompt's style if needed, but usually query params are appended.
+      // Prompt: https://api.nowcerts.com/api/InsuredList()?$orderby=...
+      const url = `${BASE_URL}${endpoint}()?${encodeURI(filter)}&$orderby=type asc&$count=true`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -168,6 +160,52 @@ export const nowCertsApi = {
     } catch (err) {
       console.warn("Search Failed:", err);
       throw err;
+    }
+  },
+
+  async updateInsured(data: any) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Insured/Insert`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Update Failed: ${errorText}`);
+      }
+      return await response.json();
+    } catch (e) {
+      console.error("Update Insured Error", e);
+      throw e;
+    }
+  },
+
+  async insertTask(task: any) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Zapier/InsertTask`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(task)
+      });
+
+      if (!response.ok) {
+         const errorText = await response.text();
+         throw new Error(`Task Insert Failed: ${errorText}`);
+      }
+      return await response.json();
+    } catch (e) {
+      console.error("Insert Task Error", e);
+      throw e;
     }
   },
 
@@ -272,6 +310,60 @@ export const nowCertsApi = {
     }
   },
 
+  async getPolicyCoverages(policyDatabaseId: string) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Policy/Coverages`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          PolicyDataBaseId: [policyDatabaseId]
+        })
+      });
+      if (!response.ok) throw new Error("Fetch failed");
+      return await response.json();
+    } catch (e) {
+      return [];
+    }
+  },
+
+  async getPolicyFiles(policyId: string, insuredId: string) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Policy/GetPolicyFilesList?insuredId=${insuredId}&policyid=${policyId}`, {
+        method: 'GET',
+        headers: { 
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error("Fetch failed");
+      return await response.json();
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async getFileDirectUrl(fileId: string) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Files/GetFileDirectUrl/${fileId}`, {
+        method: 'GET',
+        headers: { 
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error("Fetch failed");
+      return await response.json();
+    } catch (e) {
+      return null;
+    }
+  },
+
   async getVehicles(policyId: string) {
     try {
        const token = await this.getAccessToken();
@@ -286,25 +378,6 @@ export const nowCertsApi = {
       return await response.json();
     } catch (e) {
       return { value: [] };
-    }
-  },
-
-  async insertTask(task: any) {
-    try {
-      const token = await this.getAccessToken();
-      const response = await fetch(`${BASE_URL}/api/Task/Insert`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ...task, dueDate: new Date().toISOString() })
-      });
-      if (!response.ok) throw new Error("Insert failed");
-      return await response.json();
-    } catch (e) {
-      console.error(e);
-      throw e;
     }
   }
 };

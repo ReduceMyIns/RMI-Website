@@ -6,6 +6,7 @@ export interface Carrier {
   phone: string;
   serviceLevel: string;
   loginUrl?: string;
+  quoteUrl?: string;
   products?: string[];
   billingAddress?: string;
   email?: string;
@@ -17,7 +18,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "progressive",
     name: "Progressive",
-    logo: "https://lh3.googleusercontent.com/d/1-w8RRkeqR4lNIssou_3_26GYEDryxbaJ",
+    logo: "/Progressive Mobile.png",
     phone: "800-876-5581",
     serviceLevel: "Full Service",
     loginUrl: "https://account.apps.progressive.com/access/login",
@@ -33,7 +34,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "allstate",
     name: "Allstate",
-    logo: "https://lh3.googleusercontent.com/d/1pFX8tKOrMDo7TvtICJZCd0w4H9FE0DJd",
+    logo: "/Carrier Logos/allstate-mobile-logo.png",
     phone: "800-669-1552",
     serviceLevel: "Full Service",
     loginUrl: "https://myaccountrwd.allstate.com/anon/account/login",
@@ -49,7 +50,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "nationwide",
     name: "Nationwide",
-    logo: "https://lh3.googleusercontent.com/d/108j3zJ9oJnyDjUmn367u6De_E_9-OV6E",
+    logo: "/Nationwide Mobile.jpg",
     phone: "800-282-1446",
     serviceLevel: "Full Service",
     loginUrl: "https://www.nationwide.com/personal/login",
@@ -65,7 +66,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "travelers",
     name: "Travelers",
-    logo: "https://lh3.googleusercontent.com/d/1-uyrdfvxZoxRE-OtyONaSulL7NjDqMAY",
+    logo: "/Travelers Mobile.jpg",
     phone: "877-872-8737",
     serviceLevel: "Full Service",
     loginUrl: "https://www.travelers.com/login/#/",
@@ -81,7 +82,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "liberty-mutual",
     name: "Liberty Mutual",
-    logo: "https://lh3.googleusercontent.com/d/1thzzv3tTGjA09YHOZCVBGoQ7hCCxPYob",
+    logo: "/Liberty Mutual.jpg",
     phone: "877-538-1920",
     serviceLevel: "Full Service",
     loginUrl: "https://login-business.libertymutual.com/",
@@ -104,7 +105,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hiscox",
     name: "Hiscox",
-    logo: "https://lh3.googleusercontent.com/d/1O2GT1E8zpGQj8584zk44D_an9xrT37xY",
+    logo: "/Hiscox.png",
     phone: "866-283-7545",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/HiscoxOnline",
@@ -115,23 +116,23 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "safeco",
     name: "SafeCo",
-    logo: "https://lh3.googleusercontent.com/d/1ovIXtgaXnlq6gkCupQRNO2Rft9ufUGr9",
+    logo: "/SafeCo Mobile.jpg",
     phone: "866-472-3326",
     serviceLevel: "Full Service",
-    loginUrl: "https://bit.ly/3niQ2dB",
+    loginUrl: "https://customer.safeco.com/accountmanager/homepage",
     products: ["Personal Auto", "Homeowners", "Dwelling Fire", "Personal Umbrella", "Condo owners - Personal", "Motor Truck Cargo", "ATV / Side-By-Side", "Recreational Vehicles", "Renters (HO-4)", "Pet Insurance", "Home Warranty", "Classic Car", "Boat", "Watercraft (Small Boat)", "SR-22", "Non-Owners", "Motorcycle"],
     billingAddress: "P.O Box 91016, Chicago, IL 60680",
     email: "documents@safeco.com",
     apps: {
-      android: "https://bit.ly/SafeCoMobile",
-      ios: "https://bit.ly/SafeCoMobile"
+      android: "https://www.safeco.com/customer-resources/mobile-voice-apps/safeco-mobile-app",
+      ios: "https://www.safeco.com/customer-resources/mobile-voice-apps/safeco-mobile-app"
     },
     description: "Safeco Insurance, a Liberty Mutual company, focuses on selling personal insurance through a network of independent agents. They offer a comprehensive mix of personal insurance products."
   },
   {
     slug: "state-auto",
     name: "State Auto",
-    logo: "https://lh3.googleusercontent.com/d/1Nf7t2DntOVVt_EPln0K4JC2YVrwR5u-Y",
+    logo: "/State Auto Mobile.png",
     phone: "800-288-4425",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://empidn.stateauto.com/WebIdPForms/Login/Portal",
@@ -147,7 +148,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "next-insurance",
     name: "Next Insurance",
-    logo: "https://lh3.googleusercontent.com/d/1NDpTCIlaBOdOkyPnmI7SVqNt6cDJ2axl",
+    logo: "/Next Insurance.png",
     phone: "855-222-5919",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/NEXTportal",
@@ -163,10 +164,11 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "coterie",
     name: "Coterie",
-    logo: "https://lh3.googleusercontent.com/d/1Nrk3k0OiNoWoeEXzBgxjxcszcL5Ho3Zt",
+    logo: "/Carrier Logos/Coterie Transparent.png",
     phone: "855-566-1011",
     serviceLevel: "Full Service",
     loginUrl: "https://dashboard.coterieinsurance.com/login",
+    quoteUrl: "https://quote.coterieinsurance.com/agency/7cb52e32-a1a3-44c0-bd7b-0a68b967bd70/98bde2a0-dce9-4f4a-8491-3d152b3238c2",
     products: ["General Liability", "Business Owners", "Miscellaneous Professional Liability", "Errors And Omissions"],
     email: "support@coterieinsurance.com",
     description: "Coterie Insurance simplifies small business insurance, delivering speed, simplicity, and service through technology. Partners include Spinnaker Insurance."
@@ -174,7 +176,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "cna",
     name: "CNA",
-    logo: "https://lh3.googleusercontent.com/d/1O8-oKUzAFH8Yni4gCrlyhCbCSJOC3bBS",
+    logo: "/Carrier Logos/CNA.jpg",
     phone: "800-262-2000",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://bit.ly/CNALogin",
@@ -186,7 +188,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "pie-insurance",
     name: "Pie Insurance",
-    logo: "https://storage.googleapis.com/glide-prod.appspot.com/uploads-v2/afXkvWnriydq7v7818N6/pub/pfRH5aDG7B08YA3esyQh.png",
+    logo: "/Pie.png",
     phone: "855-275-9884",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://partner.pieinsurance.com/sign-in",
@@ -197,10 +199,11 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "thimble",
     name: "Thimble",
-    logo: "https://lh3.googleusercontent.com/d/1O69jXSP5qENzJ3QUyKpj23_R1jgXZvhr",
+    logo: "/Thimble Agent.jpg",
     phone: "855-940-4525",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/ThimbleOnline",
+    quoteUrl: "https://link.thimble.com/broker/FKLZKGK9F",
     products: ["Worker's Compensation", "Business Owners", "Miscellaneous Professional Liability", "Errors And Omissions", "General Liability", "Short Term General Liability", "Special Event policies", "Special Events", "Commercial Inland Marine"],
     email: "broker@thimbel.com",
     apps: {
@@ -212,7 +215,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "foremost",
     name: "Foremost",
-    logo: "https://lh3.googleusercontent.com/d/1PBHx125Ip3jRlIVrkIYrW9ZzVzBVwYgi",
+    logo: "/Foremost Agent.jpg",
     phone: "800-527-3905",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/ForemostLogin",
@@ -228,7 +231,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "american-modern",
     name: "American Modern",
-    logo: "https://lh3.googleusercontent.com/d/1Oag9bI3vntEnwxRo6Jk1KZHio_8vDYPb",
+    logo: "/Carrier Logos/American Modern Agent.png",
     phone: "800-543-2644",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/AMIGLogin",
@@ -240,7 +243,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hagerty",
     name: "Hagerty",
-    logo: "https://lh3.googleusercontent.com/d/1NBnLhDE1qlMr3_pQaACgXJI_574-xiMH",
+    logo: "/Hagerty.jpg",
     phone: "877-922-9701",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/HagertyLogin",
@@ -251,7 +254,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "lemonade",
     name: "Lemonade",
-    logo: "https://lh3.googleusercontent.com/d/1tSWhtRVHFg9AI9PpuR_5dLmCVkupbhuZ",
+    logo: "/Lemonade Agent.png",
     phone: "844-733-8666",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/LemonadeOnline",
@@ -266,7 +269,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "openly",
     name: "Openly",
-    logo: "https://lh3.googleusercontent.com/d/1zpIqcvn1eBdiJieLsIwnt3QhebwHQe1g",
+    logo: "/Openly transparent logo.png",
     phone: "857-990-9080",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3vzLWBR",
@@ -278,7 +281,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "branch",
     name: "Branch",
-    logo: "https://storage.googleapis.com/glide-prod.appspot.com/uploads-v2/afXkvWnriydq7v7818N6/pub/ZkLfvF3lK9OPbmfLGIE7.png",
+    logo: "/Carrier Logos/Branch.png",
     phone: "855-438-5411",
     serviceLevel: "Full Service",
     loginUrl: "https://account.ourbranch.com/",
@@ -290,5 +293,221 @@ export const CARRIERS_DATA: Carrier[] = [
         ios: "https://apps.apple.com/us/app/branch-insurance/id1437502167"
     },
     description: "Branch Insurance utilizes data and technology to make insurance easier to buy and more affordable for everyone, restoring insurance to its original intent: a force for communal good."
+  },
+  {
+    slug: "hippo",
+    name: "Hippo",
+    logo: "/Hippo Agent.jpg",
+    phone: "800-585-0705",
+    serviceLevel: "Full Service",
+    loginUrl: "https://my.hippo.com/login",
+    products: ["Homeowners", "Condo owners - Personal"],
+    email: "support@hippo.com",
+    description: "Hippo is a modern home insurance company that uses technology to provide smarter coverage and proactive home maintenance tools."
+  },
+  {
+    slug: "attune",
+    name: "Attune",
+    logo: "/Carrier Logos/Attune Logo.png",
+    phone: "888-530-4650",
+    serviceLevel: "Partial Service",
+    loginUrl: "https://app.attuneinsurance.com/login",
+    products: ["Business Owners", "General Liability", "Professional Liability"],
+    email: "help@attuneinsurance.com",
+    description: "Attune uses data and technology to provide small business insurance quickly and efficiently."
+  },
+  {
+    slug: "biberk",
+    name: "Berkshire Hathaway (biBERK)",
+    logo: "/Carrier Logos/biBERKtile.jpg",
+    phone: "844-472-0967",
+    serviceLevel: "Full Service",
+    loginUrl: "https://www.biberk.com/policyholders",
+    products: ["Worker's Compensation", "General Liability", "Business Owners", "Commercial Auto"],
+    email: "partneragentservice@biberk.com",
+    description: "biBERK, part of the Berkshire Hathaway group, provides simple and affordable insurance directly to small businesses."
+  },
+  {
+    slug: "dairyland",
+    name: "Dairyland",
+    logo: "/Carrier Logos/Dairyland Logo.png",
+    phone: "800-334-0090",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/3joUiqO",
+    products: ["Personal Auto", "Motorcycle", "SR-22", "Non-Owners"],
+    email: "help@dairylandinsurance.com",
+    description: "Dairyland provides affordable auto and motorcycle insurance, specializing in non-standard risks and SR-22 filings."
+  },
+  {
+    slug: "employers",
+    name: "Employers",
+    logo: "/Employers.png",
+    phone: "888-682-6671",
+    serviceLevel: "Agency Serviced",
+    products: ["Worker's Compensation"],
+    email: "customersupport@employers.com",
+    description: "Employers specializes in workers' compensation insurance for small businesses, with a focus on safety and cost-effective coverage."
+  },
+  {
+    slug: "encompass",
+    name: "Encompass",
+    logo: "/Encompass.png",
+    phone: "800-897-9678",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/RIMEncompass",
+    products: ["Homeowners", "Personal Auto", "Personal Umbrella"],
+    email: "Service@encompassins.com",
+    description: "Encompass Insurance, an Allstate company, provides high-quality personal insurance products through independent agents."
+  },
+  {
+    slug: "grange",
+    name: "Grange",
+    logo: "/Grange Agent.jpg",
+    phone: "855-299-2040",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/GrangeLogin",
+    products: ["Homeowners", "Personal Auto", "Business Owners", "Commercial Auto"],
+    email: "mypolicy@grangeinsurance.com",
+    description: "Grange Insurance provides a wide range of personal and commercial insurance products through independent agents in the Midwest and Southeast."
+  },
+  {
+    slug: "guard",
+    name: "Guard",
+    logo: "/GUARD Agent.png",
+    phone: "800-969-5454",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/3psJqfJ",
+    products: ["Business Owners", "Worker's Compensation", "Commercial Auto", "Personal Auto", "Homeowners"],
+    email: "servicecenter@guard.com",
+    description: "Berkshire Hathaway GUARD Insurance Companies provide a variety of insurance products for small to medium-sized businesses and individuals."
+  },
+  {
+    slug: "kemper",
+    name: "Kemper",
+    logo: "/Kemper mobile logo.png",
+    phone: "800-327-1500",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/3vD7zkH",
+    products: ["Personal Auto", "Homeowners", "Life Insurance"],
+    email: "specialtyservice@kemper.com",
+    description: "Kemper provides a range of insurance products, including auto, home, and life, with a focus on the non-standard auto market."
+  },
+  {
+    slug: "markel",
+    name: "Markel",
+    logo: "/Markel Firstcomp Agent.jpg",
+    phone: "888-500-3344",
+    serviceLevel: "Full Service",
+    loginUrl: "https://account.markel.com/",
+    products: ["General Liability", "Worker's Compensation", "Professional Liability", "Specialty Programs"],
+    email: "customerservice2@markel.com",
+    description: "Markel is a diverse financial holding company that provides specialty insurance products and programs for niche markets."
+  },
+  {
+    slug: "mercury",
+    name: "Mercury",
+    logo: "/Mercury.png",
+    phone: "866-539-2075",
+    serviceLevel: "Full Service",
+    products: ["Personal Auto", "Homeowners", "Business Owners"],
+    email: "service@mercuryinsurance.com",
+    description: "Mercury Insurance provides affordable auto, home, and business insurance through a network of independent agents."
+  },
+  {
+    slug: "metlife",
+    name: "MetLife",
+    logo: "/Metlife Logo.jfif",
+    phone: "800-422-4272",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/2Zd9Uap",
+    products: ["Auto", "Home", "Life", "Dental", "Vision"],
+    email: "policyupdate@metlife.com",
+    description: "MetLife is a global provider of insurance, annuities, and employee benefit programs, serving millions of customers worldwide."
+  },
+  {
+    slug: "national-general",
+    name: "National General",
+    logo: "/National General.jpg",
+    phone: "877-468-3466",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/3E3rhsY",
+    products: ["Personal Auto", "Commercial Auto", "Homeowners", "Health Insurance"],
+    email: "service@ngic.com",
+    description: "National General Insurance, an Allstate company, provides a variety of insurance products, specializing in non-standard auto and health insurance."
+  },
+  {
+    slug: "stillwater",
+    name: "Stillwater",
+    logo: "/Stillwater.png",
+    phone: "855-712-4092",
+    serviceLevel: "Full Service",
+    loginUrl: "https://stillwaterinsurance.com/SalesPortal/login",
+    products: ["Homeowners", "Personal Auto", "Business Owners", "Commercial Auto"],
+    email: "ins@stillwater.com",
+    description: "Stillwater Insurance provides a suite of personal and commercial insurance products, with a focus on ease of use and competitive pricing."
+  },
+  {
+    slug: "the-general",
+    name: "The General",
+    logo: "/The General Mobile.png",
+    phone: "800-280-1466",
+    serviceLevel: "Full Service",
+    loginUrl: "https://bit.ly/3niYzgK",
+    products: ["Personal Auto", "SR-22"],
+    email: "customersupport@thegeneral.com",
+    description: "The General specializes in providing affordable auto insurance to drivers who may have difficulty obtaining coverage elsewhere."
+  },
+  {
+    slug: "trexis",
+    name: "Trexis",
+    logo: "/Trexis Mobile.png",
+    phone: "877-384-7466",
+    serviceLevel: "Partial Service",
+    loginUrl: "https://trexis.com/",
+    products: ["Personal Auto"],
+    email: "customerservice@trexis.com",
+    description: "Trexis provides affordable auto insurance products through independent agents, with a focus on the non-standard market."
+  },
+  {
+    slug: "the-hartford",
+    name: "The Hartford",
+    logo: "/The Hartford.png",
+    phone: "800-624-5578",
+    serviceLevel: "Full Service",
+    loginUrl: "https://www.thehartford.com/login",
+    products: ["Business Owners", "Worker's Compensation", "General Liability", "Commercial Auto", "Homeowners", "Personal Auto"],
+    description: "The Hartford is a leader in property and casualty insurance, group benefits and mutual funds. With more than 200 years of expertise, The Hartford is widely recognized for its service excellence, sustainability practices, trust and integrity."
+  },
+  {
+    slug: "geico",
+    name: "Geico",
+    logo: "/geico-logo.png",
+    phone: "800-207-7847",
+    serviceLevel: "Full Service",
+    loginUrl: "https://www.geico.com/login/",
+    products: ["Personal Auto", "Motorcycle", "Boat", "Recreational Vehicles"],
+    description: "GEICO (Government Employees Insurance Company) is a private American auto insurance company. It is the second largest auto insurer in the United States, after State Farm."
+  },
+  {
+    slug: "usli",
+    name: "USLI",
+    logo: "/USLI Agent.png",
+    phone: "800-523-5545",
+    serviceLevel: "Partial Service",
+    loginUrl: "https://bit.ly/3jrn9ep",
+    products: ["General Liability", "Professional Liability", "Business Owners", "Special Events"],
+    email: "support@usli.com",
+    description: "USLI specializes in providing insurance for small businesses, non-profits, and professionals through a wide range of specialty programs."
+  },
+  {
+    slug: "insure-tax",
+    name: "Insure Tax",
+    logo: "https://ui-avatars.com/api/?name=Insure+Tax&background=0D8ABC&color=fff",
+    phone: "615-900-0288",
+    serviceLevel: "Full Service",
+    loginUrl: "https://partner.insuretax.com/auth/login-taxpayer",
+    products: ["Tax Preparation", "Bookkeeping", "Strategic Planning"],
+    email: "service@ReduceMyInsurance.Net",
+    description: "Insure Tax provides comprehensive tax planning and preparation services integrated with your insurance strategy."
   }
 ];

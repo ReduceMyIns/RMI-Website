@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   ArrowRight, Shield, Car, Home, Briefcase, Zap, Heart, Umbrella, Anchor, Truck, Hammer, 
-  Search, ExternalLink, Sparkles, Building, Info, FileText, Layout, Stethoscope, Eye, Activity, Users, Waves, PawPrint, FileSignature, Bike, TreePine, Trophy, TrendingUp, DollarSign, Award, Wind
+  Search, ExternalLink, Sparkles, Building, Info, FileText, Layout, Stethoscope, Eye, Activity, Users, Waves, PawPrint, FileSignature, Bike, TreePine, Trophy, TrendingUp, DollarSign, Award, Wind, Calculator, Lock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { INDUSTRIES } from '../data/industryData';
@@ -89,6 +89,34 @@ const PRODUCTS = {
         desc: "Get an instant cash offer for your junk or unwanted car with free pickup.",
         slug: 'sell-car',
         customRoute: '/sell-car'
+    },
+    {
+        name: "Insure Tax",
+        icon: Calculator,
+        desc: "Integrated tax planning and preparation services.",
+        slug: 'insure-tax',
+        customRoute: '/insure-tax'
+    },
+    {
+        name: "Home Warranty",
+        icon: Home,
+        desc: "Comprehensive home warranty plans for your appliances and systems.",
+        slug: 'choice-home-warranty',
+        customRoute: '/choice-warranty'
+    },
+    {
+        name: "Auto Warranty",
+        icon: Shield,
+        desc: "Extended warranty protection for your car, truck, or RV.",
+        slug: 'arkay-warranty',
+        customRoute: '/arkay-warranty'
+    },
+    {
+        name: "Home Security",
+        icon: Lock,
+        desc: "Protect your home with top-rated security systems from ADT and Cove.",
+        slug: 'home-security',
+        customRoute: '/home-security'
     }
   ],
   Commercial: [
@@ -119,6 +147,13 @@ const PRODUCTS = {
         slug: 'sports',
         customRoute: '/sports'
     },
+    {
+        name: "Insure Tax",
+        icon: Calculator,
+        desc: "Business tax preparation, bookkeeping, and strategic planning.",
+        slug: 'insure-tax',
+        customRoute: '/insure-tax'
+    }
   ],
   Financial: [
     {
@@ -127,6 +162,13 @@ const PRODUCTS = {
         desc: "Investment platforms and financial growth tools including Webull and Robinhood.",
         slug: 'financial',
         customRoute: '/financial'
+    },
+    {
+        name: "Insure Tax",
+        icon: Calculator,
+        desc: "Comprehensive tax services for individuals and businesses.",
+        slug: 'insure-tax',
+        customRoute: '/insure-tax'
     }
   ]
 };

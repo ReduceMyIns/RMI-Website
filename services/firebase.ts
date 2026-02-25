@@ -1,6 +1,6 @@
 // @ts-ignore
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, initializeAuth, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 // @ts-ignore
@@ -22,7 +22,13 @@ const firebaseConfig = {
 // Initialize Firebase (Singleton Pattern)
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+// Use initializeAuth for more control over persistence, especially in iframes
+export const auth = getApps().length > 0 
+  ? getAuth(app) 
+  : initializeAuth(app, {
+      persistence: browserLocalPersistence,
+    });
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

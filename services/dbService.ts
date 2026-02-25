@@ -1,7 +1,8 @@
 
-import { db, storage } from "./firebase";
+import { db, storage, auth } from "./firebase";
 import { collection, addDoc, doc, setDoc, getDoc, updateDoc, query, where, getDocs, orderBy, deleteDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { signInAnonymously } from "firebase/auth";
 import { KnowledgeArticle } from "../types";
 
 export const dbService = {
@@ -28,15 +29,28 @@ export const dbService = {
    * Save User Profile linked to Auth UID
    */
   async saveUserProfile(uid: string, data: any) {
+    // Ensure we are using a valid UID, prioritizing the current authenticated user
+    const targetUid = auth.currentUser?.uid || uid;
+    
+    if (!targetUid) {
+      throw new Error("Authentication required: No user ID found to save profile.");
+    }
+
     try {
-      await setDoc(doc(db, "users", uid), {
-        ...data,
+      // Strip uid from data to avoid potential rule conflicts where rules might forbid 
+      // modifying the document ID field within the data itself.
+      const { uid: _, ...payload } = data;
+
+      await setDoc(doc(db, "users", targetUid), {
+        ...payload,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-    } catch (e) {
-      // Log warning instead of error for permission issues to avoid alarming users/logs
-      // This happens if security rules prevent users from writing to their own profile doc in certain states
-      console.warn("Error saving user profile (likely permission issue):", e);
+    } catch (e: any) {
+      console.error("Error saving user profile:", e);
+      if (e.code === 'permission-denied') {
+        throw new Error("Permission denied: You do not have permission to update this profile. Please ensure you are logged in correctly.");
+      }
+      throw e;
     }
   },
 
@@ -61,15 +75,38 @@ export const dbService = {
    */
   async saveQuoteRequest(data: any) {
     try {
-      // Attempt to save. If rules require auth, this will fail if not logged in.
-      // The frontend should handle anonymous login before calling this.
-      const docRef = await addDoc(collection(db, "leads"), {
+      const payload = {
         ...data,
         createdAt: new Date().toISOString()
-      });
+      };
+      
+      // Add userId if authenticated to satisfy potential Firestore rules
+      if (auth.currentUser) {
+        payload.userId = auth.currentUser.uid;
+      } else {
+        // Try to wait a moment for auth to initialize if it's pending
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (auth.currentUser) {
+             payload.userId = auth.currentUser.uid;
+        } else {
+             // Try anonymous auth as last resort
+             try {
+                 const anon = await signInAnonymously(auth);
+                 payload.userId = anon.user.uid;
+             } catch (e) {
+                 console.warn("Anonymous auth failed in saveQuoteRequest", e);
+             }
+        }
+      }
+
+      const docRef = await addDoc(collection(db, "leads"), payload);
       return docRef.id;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error saving quote", e);
+      if (e.code === 'permission-denied') {
+          throw new Error("Permission denied: You must be signed in to submit a quote. Please refresh and try again.");
+      }
       throw e;
     }
   },

@@ -239,24 +239,21 @@ const ServiceCenter: React.FC = () => {
                     className="w-full pl-12 pr-4 py-4 bg-slate-900/80 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
                  />
              </div>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
                  {filteredCarriers.map(carrier => (
                      <button 
                         key={carrier.name}
                         onClick={() => setSelectedCarrier(carrier)}
-                        className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-left text-sm font-bold text-slate-300 hover:text-white transition-all border border-white/5 hover:border-blue-500/30 flex items-center gap-4 group"
+                        className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-center transition-all border border-white/5 hover:border-blue-500/50 group flex flex-col items-center gap-3"
                      >
-                        {carrier.logo ? (
-                            <div className="w-12 h-12 bg-white rounded-lg p-1.5 flex-shrink-0 flex items-center justify-center">
+                        <div className="w-full aspect-square bg-white rounded-xl p-3 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                            {carrier.logo ? (
                                 <img src={carrier.logo} alt={carrier.name} className="max-w-full max-h-full object-contain" />
-                            </div>
-                        ) : (
-                            <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex-shrink-0 flex items-center justify-center text-blue-400 font-bold text-lg">
-                                {carrier.name[0]}
-                            </div>
-                        )}
-                        <span className="flex-grow">{carrier.name}</span>
-                        <ArrowLeft className="w-4 h-4 rotate-180 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                            ) : (
+                                <Shield className="w-8 h-8 text-blue-500" />
+                            )}
+                        </div>
+                        <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors line-clamp-1">{carrier.name}</span>
                      </button>
                  ))}
              </div>

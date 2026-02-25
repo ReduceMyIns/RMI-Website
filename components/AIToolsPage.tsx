@@ -115,15 +115,14 @@ const UserCaptureModal: React.FC<{ onSubmit: (data: any) => void }> = ({ onSubmi
   );
 };
 
-const AIToolsPage: React.FC = () => {
+const AIToolsPage: React.FC<{ user?: any }> = ({ user }) => {
   const [activeTool, setActiveTool] = useState<'policy' | 'claim' | 'inspection' | 'vehicle' | 'safety' | 'bill_of_sale' | 'safety_plan' | 'business_plan' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const navigate = useNavigate();
   
   // User Session for Tool Use
-  const [sessionUser, setSessionUser] = useState<any>(null);
-  const [showCaptureModal, setShowCaptureModal] = useState(false);
+  const [sessionUser, setSessionUser] = useState<any>(user);
   
   // Policy Decoder State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,22 +159,16 @@ const AIToolsPage: React.FC = () => {
 
   // Check storage on mount
   useEffect(() => {
-    const saved = sessionStorage.getItem('rmi_tool_user');
-    if (saved) setSessionUser(JSON.parse(saved));
-  }, []);
+    if (user) {
+      setSessionUser(user);
+    } else {
+      const saved = sessionStorage.getItem('rmi_tool_user');
+      if (saved) setSessionUser(JSON.parse(saved));
+    }
+  }, [user]);
 
   const initiateTool = (tool: any) => {
-    if (!sessionUser) {
-      setShowCaptureModal(true);
-    } else {
-      setActiveTool(tool);
-    }
-  };
-
-  const handleCaptureSubmit = (data: any) => {
-    setSessionUser(data);
-    sessionStorage.setItem('rmi_tool_user', JSON.stringify(data));
-    setShowCaptureModal(false);
+    setActiveTool(tool);
   };
 
   // Scroll Chat to Bottom
@@ -513,8 +506,6 @@ const AIToolsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      {showCaptureModal && <UserCaptureModal onSubmit={handleCaptureSubmit} />}
-
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2">

@@ -1,23 +1,109 @@
 
-import React, { useState } from 'react';
-import { Mail, Lock, User, Shield, Loader2, ArrowRight, Zap, Info, LogIn } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mail, Lock, User, Shield, Loader2, ArrowRight, Zap, Info, LogIn, MapPin } from 'lucide-react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '../services/firebase';
 import { dbService } from '../services/dbService';
 
 interface PortalAuthProps {
   onAuthenticated: (client: any) => void;
+  defaultIsRegistering?: boolean;
+  initialData?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    dob?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  };
 }
 
-const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated }) => {
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [email, setEmail] = useState('');
+const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegistering = false, initialData }) => {
+  const [isRegistering, setIsRegistering] = useState(defaultIsRegistering);
+  const [email, setEmail] = useState(initialData?.email || '');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [firstName, setFirstName] = useState(initialData?.firstName || '');
+  const [lastName, setLastName] = useState(initialData?.lastName || '');
+  const [phone, setPhone] = useState(initialData?.phone || '');
+  const [dob, setDob] = useState(initialData?.dob || '');
+  const [address, setAddress] = useState(initialData?.address || '');
+  const [addressComponents, setAddressComponents] = useState({ 
+    street: initialData?.address || '', 
+    city: initialData?.city || '', 
+    state: initialData?.state || '', 
+    zip: initialData?.zip || '' 
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const addressInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    const initAutocomplete = () => {
+      if (isRegistering && addressInputRef.current && (window as any).google) {
+        const autocomplete = new (window as any).google.maps.places.Autocomplete(addressInputRef.current, {
+          types: ['address'], // Changed from 'geocode' to 'address' for better precision
+          componentRestrictions: { country: 'us' },
+        });
+        
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.formatted_address) {
+            setAddress(place.formatted_address);
+            
+            // Parse components
+            let street = '';
+            let city = '';
+            let state = '';
+            let zip = '';
+            
+            if (place.address_components) {
+              for (const component of place.address_components) {
+                const type = component.types[0];
+                if (type === 'street_number') {
+                  street = component.long_name + ' ' + street;
+                }
+                if (type === 'route') {
+                  street += component.long_name;
+                }
+                if (type === 'locality') {
+                  city = component.long_name;
+                }
+                if (type === 'administrative_area_level_1') {
+                  state = component.short_name;
+                }
+                if (type === 'postal_code') {
+                  zip = component.long_name;
+                }
+              }
+            }
+            setAddressComponents({ street: street.trim(), city, state, zip });
+          }
+        });
+        return true;
+      }
+      return false;
+    };
+
+    if (isRegistering) {
+      if (!initAutocomplete()) {
+        interval = setInterval(() => {
+          if (initAutocomplete()) {
+            clearInterval(interval);
+          }
+        }, 500);
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRegistering]);
 
   const formatPhoneNumber = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -50,6 +136,12 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated }) => {
           lastName,
           email,
           phone,
+          dob,
+          address,
+          street: addressComponents.street || address,
+          city: addressComponents.city,
+          state: addressComponents.state,
+          zip: addressComponents.zip,
           role: 'client'
         };
 
@@ -77,11 +169,13 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated }) => {
 
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
-        setError("Account already exists. Please switch to 'Sign In'.");
+        setError("Account already exists. Please switch to 'Returning User'.");
       } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError("Invalid email or password.");
       } else if (err.code === 'auth/weak-password') {
         setError("Password should be at least 6 characters.");
+      } else if (err.code === 'auth/network-request-failed') {
+        setError(`Connection blocked. Please: 1) Disable ad-blockers. 2) Add "${window.location.hostname}" to 'Authorized Domains' in Firebase Console (Authentication > Settings).`);
       } else {
         console.error("Auth Error", err);
         setError(err.message || "Authentication failed. Please try again.");
@@ -100,8 +194,12 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated }) => {
           <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-blue-600 rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-blue-500/30 mb-2">
             <Shield className="w-8 h-8 md:w-10 md:h-10 text-white" />
           </div>
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-white tracking-tight leading-tight">Secure Portal Access</h2>
-          <p className="text-xs md:text-sm text-slate-400 max-w-xs mx-auto">Manage policies, view inspections, and connect with agents.</p>
+          <h2 className="text-2xl md:text-3xl font-heading font-bold text-white tracking-tight leading-tight">
+            {isRegistering ? "New User" : "Returning User"}
+          </h2>
+          <p className="text-xs md:text-sm text-slate-400 max-w-xs mx-auto">
+            {isRegistering ? "Create your secure account to start your application." : "Sign in to continue your application or manage your policies."}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
@@ -111,43 +209,95 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated }) => {
                onClick={() => { setIsRegistering(false); setError(''); }}
                className={`flex-1 py-3 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${!isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
              >
-               Sign In
+               Returning User
              </button>
              <button
                type="button"
                onClick={() => { setIsRegistering(true); setError(''); }}
                className={`flex-1 py-3 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
              >
-               Register
+               New User
              </button>
           </div>
 
           {isRegistering && (
-            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-right">
-               <div className="space-y-1">
+            <div className="space-y-4 animate-in slide-in-from-right">
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                     <input 
+                       placeholder="First Name" 
+                       value={firstName}
+                       onChange={(e) => setFirstName(e.target.value)}
+                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                     />
+                  </div>
+                  <div className="space-y-1">
+                     <input 
+                       placeholder="Last Name" 
+                       value={lastName}
+                       onChange={(e) => setLastName(e.target.value)}
+                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                     />
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                     <input 
+                       type="date"
+                       placeholder="Date of Birth"
+                       value={dob}
+                       onChange={(e) => setDob(e.target.value)}
+                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                     />
+                  </div>
+                  <div className="space-y-1">
+                     <input 
+                       type="tel"
+                       placeholder="Phone (###-###-####)" 
+                       value={phone}
+                       onChange={handlePhoneChange}
+                       maxLength={12}
+                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                     />
+                  </div>
+               </div>
+
+               <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-400 transition-colors">
+                    <MapPin className="w-5 h-5" />
+                  </div>
                   <input 
-                    placeholder="First Name" 
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                    ref={addressInputRef}
+                    placeholder="Street Address" 
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
                   />
                </div>
-               <div className="space-y-1">
+
+               <div className="grid grid-cols-3 gap-4">
                   <input 
-                    placeholder="Last Name" 
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                    placeholder="City" 
+                    value={addressComponents.city} 
+                    onChange={(e) => setAddressComponents({...addressComponents, city: e.target.value})}
+                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
                   />
-               </div>
-               <div className="col-span-2">
+                  <select 
+                    value={addressComponents.state} 
+                    onChange={(e) => setAddressComponents({...addressComponents, state: e.target.value})}
+                    className="px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                  >
+                    <option value="">State</option>
+                    {['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                   <input 
-                    type="tel"
-                    placeholder="Phone (###-###-####)" 
-                    value={phone}
-                    onChange={handlePhoneChange}
-                    maxLength={12}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                    placeholder="Zip" 
+                    value={addressComponents.zip} 
+                    onChange={(e) => setAddressComponents({...addressComponents, zip: e.target.value})}
+                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
                   />
                </div>
             </div>

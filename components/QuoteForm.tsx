@@ -18,9 +18,11 @@ import { nowCertsApi } from '../services/nowCertsService';
 import { QuoteRequest, Resident, Vehicle, LeadData, CommercialRatingData } from '../types';
 import { getIndustryBySlug, IndustryProfile } from '../data/industryData';
 
+import PortalAuth from './PortalAuth';
+
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
-type FlowStep = 'LEAD_CAPTURE' | 'REFINEMENT' | 'COVERAGE' | 'SUMMARY' | 'COMMERCIAL_RISK' | 'COMMERCIAL_DETAILS' | 'COMMERCIAL_COVERAGE' | 'COMMERCIAL_SUMMARY';
+type FlowStep = 'LANDING' | 'LEAD_CAPTURE' | 'REFINEMENT' | 'COVERAGE' | 'SUMMARY' | 'COMMERCIAL_RISK' | 'COMMERCIAL_DETAILS' | 'COMMERCIAL_COVERAGE' | 'COMMERCIAL_SUMMARY';
 
 const formatPhoneNumber = (value: string) => {
   const numbers = value.replace(/\D/g, '');
@@ -40,15 +42,111 @@ const QuoteForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
   
   const [step, setStep] = useState<FlowStep>('LEAD_CAPTURE');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiStatus, setAiStatus] = useState('');
   const [activeIndustry, setActiveIndustry] = useState<IndustryProfile | null>(null);
-  
-  // Account Creation State
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Address Autocomplete for LEAD_CAPTURE
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    const initAutocomplete = () => {
+      if (step === 'LEAD_CAPTURE' && addressInputRef.current && (window as any).google) {
+        const autocomplete = new (window as any).google.maps.places.Autocomplete(addressInputRef.current, {
+          types: ['address'],
+          componentRestrictions: { country: 'us' },
+        });
+        
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.formatted_address) {
+            // Parse components
+            let street = '';
+            let city = '';
+            let state = '';
+            let zip = '';
+            
+            if (place.address_components) {
+              for (const component of place.address_components) {
+                const type = component.types[0];
+                if (type === 'street_number') {
+                  street = component.long_name + ' ' + street;
+                }
+                if (type === 'route') {
+                  street += component.long_name;
+                }
+                if (type === 'locality') {
+                  city = component.long_name;
+                }
+                if (type === 'administrative_area_level_1') {
+                  state = component.short_name;
+                }
+                if (type === 'postal_code') {
+                  zip = component.long_name;
+                }
+              }
+            }
+            
+            setLeadData(prev => ({
+              ...prev,
+              address: street.trim() || place.formatted_address,
+              city: city || prev.city,
+              state: state || prev.state,
+              zip: zip || prev.zip
+            }));
+          }
+        });
+        return true;
+      }
+      return false;
+    };
+
+    if (step === 'LEAD_CAPTURE') {
+      if (!initAutocomplete()) {
+        interval = setInterval(() => {
+          if (initAutocomplete()) {
+            clearInterval(interval);
+          }
+        }, 500);
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step]);
+
+  // Check for existing auth on mount
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user && step === 'LANDING') {
+         // Prefill from profile
+         const profile = await dbService.getUserProfile(user.uid);
+         if (profile) {
+             setLeadData(prev => ({ 
+               ...prev, 
+               ...profile,
+               firstName: profile.firstName || prev.firstName,
+               lastName: profile.lastName || prev.lastName,
+               email: profile.email || profile.eMail || prev.email,
+               phone: profile.phone || profile.cellPhone || prev.phone,
+               dob: profile.dob || prev.dob,
+               // Ensure address mapping is correct
+               address: profile.street || profile.address || profile.addressLine1 || prev.address,
+               city: profile.city || prev.city,
+               state: profile.state || prev.state,
+               zip: profile.zip || profile.zipCode || prev.zip
+             }));
+         }
+         setStep('LEAD_CAPTURE');
+      }
+    });
+    return () => unsubscribe();
+  }, [step]);
   
   // UI State for Refinement Step
   const [expandedDriverId, setExpandedDriverId] = useState<string | null>(null);
@@ -149,6 +247,11 @@ const QuoteForm: React.FC = () => {
 
             if (updatesNeeded) {
                 setFormData(prev => ({ ...prev, vehicles: updatedVehicles }));
+                
+                // Save enriched vehicle data to Firestore
+                if (formData.applicationId && !formData.applicationId.startsWith('RMI-')) {
+                    await dbService.updateLead(formData.applicationId, { vehicles: updatedVehicles });
+                }
             }
         };
         enrichVehicles();
@@ -201,58 +304,12 @@ const QuoteForm: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleLeadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const processLeadSubmission = async () => {
     setIsProcessing(true);
     setAiStatus('Initializing Session...');
     
     try {
-      // 1. Authentication Strategy
-      // If user is not already logged in, we need to authenticate them
-      // either by creating a new account (if password provided) or anonymously.
-      
-      let currentUser = auth.currentUser;
-
-      if (password && password === confirmPassword) {
-          setAiStatus('Creating Secure Account...');
-          try {
-             const userCredential = await createUserWithEmailAndPassword(auth, leadData.email, password);
-             currentUser = userCredential.user;
-             
-             // Best effort profile save
-             await dbService.saveUserProfile(currentUser.uid, {
-                 ...leadData,
-                 role: 'client'
-             });
-             setAiStatus('Account Created. Searching Database...');
-          } catch (authError: any) {
-             if (authError.code === 'auth/email-already-in-use') {
-                 console.log("User exists, proceeding with flow");
-                 // If email in use but not logged in, we might be in a weird state. 
-                 // Ideally prompt login, but for now we proceed if they are already auth'd or try anon.
-             } else {
-                 console.error("Auth Error", authError);
-                 // Fall through to try anon auth if account creation failed
-             }
-          }
-      } 
-      
-      // Fallback: Anonymous Authentication
-      // Critical for Firestore Rules: Must be authenticated to write to 'leads'
-      if (!auth.currentUser) {
-          try {
-             const anon = await signInAnonymously(auth);
-             currentUser = anon.user;
-             console.log("Signed in anonymously", currentUser.uid);
-          } catch (e) {
-             console.error("Anonymous Auth Failed", e);
-             // If auth fails completely, DB writes will likely fail, but we proceed to try.
-          }
-      }
-
-      // 2. Check Existing Lead in Firestore
-      // NOTE: This might fail if rules prevent searching other users' data.
-      // The updated dbService.findExistingLead now swallows this error.
+      // 1. Check Existing Lead in Firestore
       let existingLead = await dbService.findExistingLead(leadData.email, leadData.phone);
       
       let currentFormData = { ...formData, ...leadData };
@@ -271,8 +328,7 @@ const QuoteForm: React.FC = () => {
           prefilled = true;
       }
 
-      // 3. Save Lead
-      // Auth context should now be established, allowing this write.
+      // 2. Save Lead
       const leadId = await dbService.saveQuoteRequest({ 
         ...leadData, 
         industry: activeIndustry?.name || 'General',
@@ -296,6 +352,13 @@ const QuoteForm: React.FC = () => {
                 })),
                 fenrisData: prefill 
               };
+
+              // Save enriched data to Firestore
+              await dbService.updateLead(leadId, {
+                  residents: currentFormData.residents,
+                  vehicles: currentFormData.vehicles,
+                  fenrisData: currentFormData.fenrisData
+              });
           }
           // Property Research
           if (currentFormData.bundledLines.includes('Home')) {
@@ -330,8 +393,14 @@ const QuoteForm: React.FC = () => {
           }
           setStep('COMMERCIAL_RISK');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Workflow Error:", err);
+      
+      if (err.message && err.message.includes("Permission denied")) {
+          alert("Error: Your application data could not be saved to the database due to a permission issue. Please ensure you are signed in and try again.");
+          return;
+      }
+
       // Fallback: Proceed to next step even if backend save failed (UI resilience)
       if (leadData.type === 'Commercial') setStep('COMMERCIAL_RISK');
       else setStep('REFINEMENT');
@@ -339,6 +408,36 @@ const QuoteForm: React.FC = () => {
       setIsProcessing(false);
       setAiStatus('');
     }
+  };
+
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!auth.currentUser) {
+        setShowAuthModal(true);
+        return;
+    }
+    
+    await processLeadSubmission();
+  };
+
+  const handleAuthSuccess = async (user: any) => {
+    setShowAuthModal(false);
+    if (user) {
+         setLeadData(prev => ({
+             ...prev,
+             firstName: user.firstName || prev.firstName,
+             lastName: user.lastName || prev.lastName,
+             email: user.email || prev.email,
+             phone: user.phone || prev.phone,
+             address: user.address || prev.address,
+             city: user.city || prev.city,
+             state: user.state || prev.state,
+             zip: user.zip || prev.zip,
+             dob: user.dob || prev.dob
+         }));
+    }
+    await processLeadSubmission();
   };
 
   const handleCommercialDetailsSubmit = (e: React.FormEvent) => {
@@ -476,6 +575,29 @@ const QuoteForm: React.FC = () => {
   };
 
   // --- RENDER STEPS ---
+  
+  if (step === 'LANDING') {
+      return (
+          <div className="max-w-4xl mx-auto py-12">
+              <PortalAuth defaultIsRegistering={true} onAuthenticated={(user) => {
+                  setLeadData(prev => ({ 
+                      ...prev, 
+                      ...user,
+                      firstName: user.firstName || prev.firstName,
+                      lastName: user.lastName || prev.lastName,
+                      email: user.email || user.eMail || prev.email,
+                      phone: user.phone || user.cellPhone || prev.phone,
+                      dob: user.dob || prev.dob,
+                      address: user.street || user.address || user.addressLine1 || prev.address,
+                      city: user.city || prev.city,
+                      state: user.state || prev.state,
+                      zip: user.zip || user.zipCode || prev.zip
+                  }));
+                  setStep('LEAD_CAPTURE');
+              }} />
+          </div>
+      );
+  }
 
   if (step === 'LEAD_CAPTURE') {
     return (
@@ -494,9 +616,9 @@ const QuoteForm: React.FC = () => {
                     <Sparkles className="w-3 h-3" /> AI-Powered Intake
                  </div>
                )}
-               <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">Let's build your profile.</h1>
+               <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">Applicant Information</h1>
                <p className="text-slate-400 max-w-md mx-auto">
-                 We'll use public data sources to pre-fill your application. Create an account to track your status.
+                 Please verify your details below. We've pre-filled what we could from your profile.
                </p>
             </div>
 
@@ -536,43 +658,51 @@ const QuoteForm: React.FC = () => {
 
                <input type="email" required placeholder="Email Address" value={leadData.email} onChange={e => setLeadData({...leadData, email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <input type="number" placeholder="Current Monthly Premium ($)" value={currentPremium} onChange={e => setCurrentPremium(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
-                   <div className="flex items-center px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 text-xs">
-                        Optional: Helps us beat your rate.
-                   </div>
-               </div>
-
                <div className="space-y-4 pt-4 border-t border-white/10">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Risk Location</span>
-                  <input required placeholder="Street Address" value={leadData.address} onChange={e => setLeadData({...leadData, address: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  <input 
+                    ref={addressInputRef}
+                    required 
+                    placeholder="Street Address" 
+                    value={leadData.address} 
+                    onChange={e => setLeadData({...leadData, address: e.target.value})} 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" 
+                  />
                   <div className="grid grid-cols-3 gap-4">
                      <input required placeholder="City" value={leadData.city} onChange={e => setLeadData({...leadData, city: e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
-                     <select value={leadData.state} onChange={e => setLeadData({...leadData, state: e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors bg-slate-900">{US_STATES.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                     <select value={leadData.state} onChange={e => setLeadData({...leadData, state: e.target.value})} className="bg-slate-900 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors">
+                        {US_STATES.map(s => <option key={s} value={s} className="bg-slate-900 text-white">{s}</option>)}
+                     </select>
                      <input required placeholder="Zip" value={leadData.zip} onChange={e => setLeadData({...leadData, zip: e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
                   </div>
                </div>
 
-               {/* ACCOUNT CREATION */}
-               <div className="space-y-4 pt-4 border-t border-white/10">
-                  <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-blue-400" />
-                      <span className="text-xs font-bold text-white uppercase tracking-widest">Create Secure Portal Account</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                      <input type="password" placeholder="Create Password" value={password} onChange={e => setPassword(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
-                      <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
-                  </div>
-                  {password && password !== confirmPassword && <p className="text-red-400 text-xs">Passwords do not match</p>}
-               </div>
-
-               <button type="submit" disabled={isProcessing || (password !== confirmPassword && password.length > 0)} className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)] transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95">
-                 {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
-                 {isProcessing ? aiStatus : "Analyze Risk Profile"}
-               </button>
+                <button type="submit" disabled={isProcessing} className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)] transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95">
+                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
+                  {isProcessing ? aiStatus : "Analyze Risk Profile"}
+                </button>
             </form>
           </div>
         </div>
+        
+        {/* AUTH MODAL */}
+        {showAuthModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="relative w-full max-w-xl">
+                <button 
+                    onClick={() => setShowAuthModal(false)}
+                    className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                >
+                    <Trash2 className="w-5 h-5 rotate-45" />
+                </button>
+                <PortalAuth 
+                    defaultIsRegistering={true} 
+                    initialData={leadData}
+                    onAuthenticated={handleAuthSuccess} 
+                />
+            </div>
+            </div>
+        )}
       </div>
     );
   }

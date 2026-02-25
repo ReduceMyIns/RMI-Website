@@ -80,6 +80,25 @@ const CommercialLinesPage: React.FC = () => {
             </p>
             <Link to="/apply" state={{ preSelected: 'Business Owners Policy' }} className="text-purple-400 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors">Start Quote &rarr;</Link>
          </div>
+
+         {/* INSURE TAX */}
+         <div className="glass-card p-8 rounded-[2.5rem] border-white/5 hover:bg-white/[0.05] transition-all group md:col-span-2">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                    <FileText className="w-8 h-8 text-white" />
+                </div>
+                <div className="flex-grow text-center md:text-left">
+                    <h3 className="text-2xl font-bold text-white mb-2">InsureTax Audit Insurance</h3>
+                    <p className="text-slate-400 text-sm mb-4">
+                        Protect your business from the financial risk of IRS audits. Covers additional taxes, penalties, interest, and professional defense costs—backed by Lloyd's of London.
+                    </p>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                        <Link to="/insure-tax" className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm transition-all">Learn More</Link>
+                        <a href="https://partner.insuretax.com/initial-assessment?rid=chasehenderson" target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold text-sm transition-all border border-white/10">Start Assessment</a>
+                    </div>
+                </div>
+            </div>
+         </div>
       </div>
     </div>
   );

@@ -41,12 +41,23 @@ const CarrierPage: React.FC = () => {
             </div>
             
             <div className="mt-10 pt-10 border-t border-white/10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link 
-                to="/apply"
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95"
-              >
-                Get a {carrier.name} Quote <ArrowRight className="w-5 h-5" />
-              </Link>
+              {carrier.quoteUrl ? (
+                <a 
+                  href={carrier.quoteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  Get a {carrier.name} Quote <ArrowRight className="w-5 h-5" />
+                </a>
+              ) : (
+                <Link 
+                  to="/apply"
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  Get a {carrier.name} Quote <ArrowRight className="w-5 h-5" />
+                </Link>
+              )}
               {carrier.loginUrl && (
                 <a 
                   href={carrier.loginUrl}
