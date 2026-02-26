@@ -2,10 +2,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Car, Shield, Zap, ArrowLeft, CheckCircle2, Navigation, AlertTriangle, DollarSign } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const AutoPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Auto Insurance Quotes | Compare 80+ Carriers"
+        description="Get the best auto insurance rates in Murfreesboro, TN. We compare Progressive, Travelers, Safeco and more to find you the lowest premiums."
+        canonicalUrl="https://www.reducemyinsurance.net/auto"
+        keywords={['auto insurance', 'car insurance quotes', 'Progressive insurance', 'Travelers insurance', 'Safeco insurance', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

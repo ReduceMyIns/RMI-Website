@@ -1,20 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { getIndustryBySlug } from '../data/industryData';
+import { getSICIndustryBySlug, getIconForCategory } from '../data/sicIndustries';
+import SEOHead from './SEOHead';
 import { 
-  Shield, CheckCircle2, ArrowRight, Zap, Bot, Sparkles, Check
+  Shield, CheckCircle2, ArrowRight, Zap, Bot, Sparkles, Check, Hash
 } from 'lucide-react';
 
 const IndustryLandingPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const industry = getIndustryBySlug(slug || '');
+  
+  const industry = useMemo(() => {
+    const fullProfile = getIndustryBySlug(slug || '');
+    if (fullProfile) return fullProfile;
+    
+    const sicEntry = getSICIndustryBySlug(slug || '');
+    if (sicEntry) {
+      return {
+        ...sicEntry,
+        icon: getIconForCategory(sicEntry.category),
+        shortDesc: `Specialized risk assessment and insurance solutions for ${sicEntry.name}. Our AI engine has mapped the unique liability profiles for SIC Code ${sicEntry.sicCode}.`,
+        coverages: ["General Liability", "Workers Compensation", "Commercial Auto", "Professional Liability"],
+        riskFactors: ["Operational Liability", "Regulatory Compliance", "Professional Errors", "Property Damage"],
+        keywords: [sicEntry.name.toLowerCase(), sicEntry.category.toLowerCase(), sicEntry.sicCode]
+      };
+    }
+    return null;
+  }, [slug]);
 
   if (!industry) {
     return <Navigate to="/industries" replace />;
   }
 
+  const isSicOnly = !(industry as any).longDesc;
+  const canonicalUrl = `https://www.reducemyinsurance.net/insurance/${industry.slug}`;
+  const keywords = (industry as any).keywords || [];
+
   return (
     <div className="min-h-screen bg-[#020617] animate-in fade-in duration-700 pb-32">
+      <SEOHead 
+        title={`${industry.name} Insurance & Risk Analysis`}
+        description={industry.shortDesc}
+        canonicalUrl={canonicalUrl}
+        keywords={[industry.name, industry.category, 'insurance', 'risk analysis', ...keywords]}
+      />
       {/* Sticky Mobile CTA */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-white/10 z-50 md:hidden">
           <Link 
@@ -31,8 +60,15 @@ const IndustryLandingPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
-              <industry.icon className="w-3 h-3" /> {industry.category} Insurance
+            <div className="flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
+                <industry.icon className="w-3 h-3" /> {industry.category} Insurance
+              </div>
+              {(industry as any).sicCode && (
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest">
+                  <Hash className="w-3 h-3" /> SIC {(industry as any).sicCode}
+                </div>
+              )}
             </div>
             
             <h1 className="text-5xl md:text-7xl font-heading font-bold text-white leading-[1.1]">

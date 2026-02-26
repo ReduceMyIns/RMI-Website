@@ -10,6 +10,8 @@ import { dbService } from '../services/dbService';
 import { extractPolicyData } from '../services/geminiService';
 import { generateDecPage, generateAutoIdCard } from '../services/pdfGenerator';
 import NowCertsIframe from './NowCertsIframe';
+import { AddVehicleModal } from './AddVehicleModal';
+import { AddDriverModal } from './AddDriverModal';
 
 // ... (Existing SERVICES array and helper functions remain same) ...
 const SERVICES = [
@@ -69,30 +71,34 @@ const PolicyDetailModal: React.FC<{ policy: any; onClose: () => void }> = ({ pol
     });
     const [loading, setLoading] = useState(true);
     const [downloading, setDownloading] = useState(false);
+    const [showAddVehicle, setShowAddVehicle] = useState(false);
+    const [showAddDriver, setShowAddDriver] = useState(false);
+
+    const fetchDetails = async () => {
+        setLoading(true);
+        try {
+            const [v, d, p, c, f] = await Promise.all([
+                nowCertsApi.getPolicyVehicles(policy.databaseId),
+                nowCertsApi.getPolicyDrivers(policy.databaseId),
+                nowCertsApi.getPolicyProperties(policy.databaseId),
+                nowCertsApi.getPolicyCoverages(policy.databaseId),
+                nowCertsApi.getPolicyFiles(policy.databaseId, policy.insuredDatabaseId)
+            ]);
+            setDetails({ 
+                vehicles: v || [], 
+                drivers: d || [], 
+                properties: p || [],
+                coverages: c || [],
+                files: f?.data?.files || []
+            });
+        } catch (e) {
+            console.error("Error fetching policy details", e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchDetails = async () => {
-            try {
-                const [v, d, p, c, f] = await Promise.all([
-                    nowCertsApi.getPolicyVehicles(policy.databaseId),
-                    nowCertsApi.getPolicyDrivers(policy.databaseId),
-                    nowCertsApi.getPolicyProperties(policy.databaseId),
-                    nowCertsApi.getPolicyCoverages(policy.databaseId),
-                    nowCertsApi.getPolicyFiles(policy.databaseId, policy.insuredDatabaseId)
-                ]);
-                setDetails({ 
-                    vehicles: v || [], 
-                    drivers: d || [], 
-                    properties: p || [],
-                    coverages: c || [],
-                    files: f?.data?.files || []
-                });
-            } catch (e) {
-                console.error("Error fetching policy details", e);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchDetails();
     }, [policy.databaseId, policy.insuredDatabaseId]);
 
@@ -124,6 +130,29 @@ const PolicyDetailModal: React.FC<{ policy: any; onClose: () => void }> = ({ pol
     const showIdCardButton = () => {
         const type = (policy.lineOfBusinesses?.[0]?.lineOfBusinessName || '').toLowerCase();
         return type.includes('auto') || type.includes('vehicle') || type.includes('water') || type.includes('boat') || type.includes('rv') || type.includes('recreation');
+    };
+
+    const handleRemoveDriver = async (driver: any) => {
+        if (!confirm(`Are you sure you want to remove ${driver.firstName} ${driver.lastName} from this policy? This will create a removal request task.`)) return;
+        
+        try {
+            await nowCertsApi.insertTask({
+                CreatorName: "Client Portal",
+                title: `Remove Driver Request: ${driver.firstName} ${driver.lastName}`,
+                description: `Client requested removal of driver from policy ${policy.number}.\nDriver: ${driver.firstName} ${driver.lastName}\nLicense: ${driver.dlNumber || 'N/A'}`,
+                category_name: "Policy Change",
+                status: "New",
+                priority: "High",
+                due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                assigned_to: ["Chase Henderson"],
+                insured_database_id: policy.insuredDatabaseId,
+                work_group_name: "Service Group"
+            });
+            alert("Removal request submitted successfully.");
+        } catch (e) {
+            console.error("Remove driver error", e);
+            alert("Failed to submit removal request.");
+        }
     };
 
     return (
@@ -276,62 +305,123 @@ const PolicyDetailModal: React.FC<{ policy: any; onClose: () => void }> = ({ pol
                                 </div>
                             )}
 
-                            {/* Vehicles */}
-                            {details.vehicles.length > 0 && (
+                            {/* Coverages */}
+                            {details.coverages.length > 0 && (
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <Car className="w-5 h-5 text-blue-400" /> Insured Vehicles
+                                        <Shield className="w-5 h-5 text-emerald-400" /> Policy Coverages
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {details.vehicles.map((v: any, i: number) => (
-                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400">
-                                                        <Car className="w-6 h-6" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-white">{v.year} {v.make} {v.model}</div>
-                                                        <div className="text-xs font-mono text-slate-500">{v.vin || 'VIN NOT ON FILE'}</div>
-                                                    </div>
-                                                </div>
-                                                
-                                                {/* Vehicle Specific Coverages */}
-                                                {v.vehicleSpecificCoverages && v.vehicleSpecificCoverages.length > 0 && (
-                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 w-full">
-                                                        {v.vehicleSpecificCoverages.map((c: any, idx: number) => (
-                                                            <div key={idx} className="flex justify-between text-xs">
-                                                                <span className="text-slate-500">{c.name || c.coverageDesc}</span>
-                                                                <span className="text-white font-mono">
-                                                                    {c.limitFormatted || (c.deductiblesFormatted ? `Ded: ${c.deductiblesFormatted}` : 'Included')}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                        {details.coverages.map((c: any, i: number) => (
+                                            <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center">
+                                                <span className="text-slate-400">{c.name || c.coverageDesc || c.coverageCd}</span>
+                                                <span className="text-white font-mono font-bold">
+                                                    {c.limitFormatted || (c.deductiblesFormatted ? `Ded: ${c.deductiblesFormatted}` : 'Included')}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Drivers */}
-                            {details.drivers.length > 0 && (
+                            {/* Vehicles */}
+                            {(details.vehicles.length > 0 || showIdCardButton()) && (
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <Users className="w-5 h-5 text-indigo-400" /> Rated Drivers
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {details.drivers.map((d: any, i: number) => (
-                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
-                                                    <Users className="w-6 h-6" />
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                            <Car className="w-5 h-5 text-blue-400" /> Insured Vehicles
+                                        </h3>
+                                        {showIdCardButton() && (
+                                            <button 
+                                                onClick={() => setShowAddVehicle(true)}
+                                                className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                                            >
+                                                <Plus className="w-4 h-4" /> Add Vehicle
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {details.vehicles.map((v: any, i: number) => (
+                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400">
+                                                        <Car className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-white">{v.year} {v.make} {v.model}</div>
+                                                        <div className="text-xs text-slate-500 uppercase tracking-widest">VIN: {v.vin}</div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-white">{d.firstName} {d.lastName}</div>
-                                                    <div className="text-xs text-slate-500 uppercase tracking-widest">Driver License: {d.dlNumber || 'Pending'}</div>
-                                                </div>
+
+                                                {/* Vehicle Specific Coverages */}
+                                                {v.coverages && v.coverages.length > 0 && (
+                                                    <div className="pl-16 space-y-2">
+                                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Vehicle Coverages</div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                            {v.coverages.map((vc: any, j: number) => (
+                                                                <div key={j} className="flex justify-between items-center p-2 bg-black/20 rounded-lg border border-white/5">
+                                                                    <span className="text-xs text-slate-400">{vc.name || vc.coverageDesc || vc.coverageCd}</span>
+                                                                    <span className="text-xs text-white font-mono">
+                                                                        {vc.limitFormatted || (vc.deductiblesFormatted ? `Ded: ${vc.deductiblesFormatted}` : 'Included')}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
+                                        {details.vehicles.length === 0 && (
+                                            <div className="py-8 text-center text-slate-500 italic bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                                No vehicles listed on this policy yet.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Drivers */}
+                            {(details.drivers.length > 0 || showIdCardButton()) && (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                            <Users className="w-5 h-5 text-indigo-400" /> Rated Drivers
+                                        </h3>
+                                        {showIdCardButton() && (
+                                            <button 
+                                                onClick={() => setShowAddDriver(true)}
+                                                className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                                            >
+                                                <Plus className="w-4 h-4" /> Add Driver
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {details.drivers.map((d: any, i: number) => (
+                                            <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between gap-4 group">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                                                        <Users className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-white">{d.firstName} {d.lastName}</div>
+                                                        <div className="text-xs text-slate-500 uppercase tracking-widest">Driver License: {d.dlNumber || 'Pending'}</div>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    onClick={() => handleRemoveDriver(d)}
+                                                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                                    title="Remove Driver"
+                                                >
+                                                    <UserMinus className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {details.drivers.length === 0 && (
+                                            <div className="col-span-2 py-8 text-center text-slate-500 italic bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                                No drivers listed on this policy yet.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -374,6 +464,32 @@ const PolicyDetailModal: React.FC<{ policy: any; onClose: () => void }> = ({ pol
                         Close
                     </button>
                 </div>
+
+                {/* Add Vehicle Modal */}
+                {showAddVehicle && (
+                    <AddVehicleModal 
+                        policyId={policy.number}
+                        policyDatabaseId={policy.databaseId}
+                        insuredDatabaseId={policy.insuredDatabaseId}
+                        onClose={() => setShowAddVehicle(false)}
+                        onSuccess={() => {
+                            fetchDetails();
+                        }}
+                    />
+                )}
+
+                {/* Add Driver Modal */}
+                {showAddDriver && (
+                    <AddDriverModal 
+                        policyId={policy.number}
+                        policyDatabaseId={policy.databaseId}
+                        insuredDatabaseId={policy.insuredDatabaseId}
+                        onClose={() => setShowAddDriver(false)}
+                        onSuccess={() => {
+                            fetchDetails();
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { Shield, LayoutDashboard, FileText, HelpCircle, Menu, X, ArrowRight, Sparkles, User, Settings, Bell, LogOut, Mail, Network, Box, Lock, PenTool, Briefcase, Wrench } from 'lucide-react';
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from './services/firebase';
 import { dbService } from './services/dbService';
+import ScrollToTop from './components/ScrollToTop';
 import LandingPage from './components/LandingPage';
 import QuoteForm from './components/QuoteForm';
 import ClientDashboard from './components/ClientDashboard';
@@ -17,6 +19,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import FloatingChat from './components/FloatingChat';
 import PortalAuth from './components/PortalAuth';
 import AgentAcademy from './components/AgentAcademy';
+import SitemapPage from './components/SitemapPage';
 import AIToolsPage from './components/AIToolsPage';
 import AIHomeInspection from './components/AIHomeInspection';
 import IndustryLandingPage from './components/IndustryLandingPage';
@@ -287,6 +290,7 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           
           <Route path="/knowledge" element={<KnowledgeBase />} />
           <Route path="/agent/academy" element={<AgentAcademy />} />
+          <Route path="/sitemap" element={<SitemapPage />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -336,9 +340,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <Router>
-      <AnalyticsTracker />
-      <div className="min-h-screen flex flex-col pt-28">
+    <HelmetProvider>
+      <Router>
+        <ScrollToTop />
+        <AnalyticsTracker />
+        <div className="min-h-screen flex flex-col pt-28">
         <Header user={user} onLogout={handleLogout} onEditProfile={() => setShowProfileEdit(true)} />
         <main className="flex-grow max-w-7xl mx-auto w-full px-6">
           <PageRoutes user={user} setShowProfileEdit={setShowProfileEdit} />
@@ -405,13 +411,15 @@ const App: React.FC = () => {
               <ul className="space-y-4 text-sm">
                 <li><Link to="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
                 <li><Link to="/privacy" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
+                <li><Link to="/sitemap" className="hover:text-blue-400 transition-colors">Sitemap</Link></li>
               </ul>
             </div>
           </div>
         </footer>
         <FloatingChat client={user} />
       </div>
-    </Router>
+      </Router>
+    </HelmetProvider>
   );
 };
 

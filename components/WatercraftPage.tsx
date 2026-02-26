@@ -3,12 +3,19 @@ import React, { useState } from 'react';
 import { Anchor, ArrowLeft, Shield, Waves, Ship, CheckCircle2, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NowCertsIframe from './NowCertsIframe';
+import SEOHead from './SEOHead';
 
 const WatercraftPage: React.FC = () => {
   const [showQuote, setShowQuote] = useState(false);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Boat & Watercraft Insurance | Marine Quotes"
+        description="Comprehensive boat and yacht insurance for Murfreesboro watercraft owners. Coverage for physical damage, liability, and wreck removal."
+        canonicalUrl="https://www.reducemyinsurance.net/watercraft"
+        keywords={['boat insurance', 'watercraft insurance', 'yacht insurance', 'marine insurance', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

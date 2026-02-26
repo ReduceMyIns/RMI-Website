@@ -2,10 +2,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Key, Laptop, ArrowLeft, DollarSign, Sofa, Dog } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const RentersPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Renters Insurance | Protect Your Belongings"
+        description="Affordable renters insurance starting at $15/month. Protect your electronics, furniture, and personal liability in your Murfreesboro apartment."
+        canonicalUrl="https://www.reducemyinsurance.net/renters"
+        keywords={['renters insurance', 'apartment insurance', 'HO-4 policy', 'tenant insurance', 'Murfreesboro renters']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

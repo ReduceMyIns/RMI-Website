@@ -84,6 +84,18 @@ export const ProfileEditModal: React.FC<{ user: any; onClose: () => void; onUpda
     fetchProfiles();
   }, [user]);
 
+  const getInsuredTypeId = (type: string | number | undefined): number => {
+      if (typeof type === 'number') return type;
+      if (!type) return 1; // Default to Personal
+      const lower = type.toString().toLowerCase();
+      if (lower.includes('commercial')) return 0;
+      if (lower.includes('personal')) return 1;
+      if (lower.includes('group')) return 2;
+      if (lower.includes('individual')) return 3;
+      if (lower.includes('medicare')) return 4;
+      return 1; // Default Personal
+  };
+
   const mapProfileToForm = (profile: any) => {
     setFormData({
         // Identity
@@ -111,7 +123,7 @@ export const ProfileEditModal: React.FC<{ user: any; onClose: () => void; onUpda
         zipCode: profile.zipCode || profile.zip || '',
         
         // Business / Classification
-        insuredType: profile.insuredType !== undefined ? profile.insuredType : 1, // Default to Personal (1)
+        insuredType: getInsuredTypeId(profile.insuredType),
         typeOfBusiness: profile.typeOfBusiness !== undefined ? profile.typeOfBusiness : 8, // Default to Other (8)
         fein: profile.fein || '',
         website: profile.website || '',
@@ -137,7 +149,10 @@ export const ProfileEditModal: React.FC<{ user: any; onClose: () => void; onUpda
         csRs: profile.csRs,
         xDatesAndLinesOfBusiness: profile.xDatesAndLinesOfBusiness,
         customFields: profile.customFields,
-        customFieldsSimple: profile.customFieldsSimple
+        customFieldsSimple: profile.customFieldsSimple,
+        
+        // Keep policies for task generation
+        policies: profile.policies || []
     });
   };
 
@@ -254,10 +269,12 @@ export const ProfileEditModal: React.FC<{ user: any; onClose: () => void; onUpda
         await nowCertsApi.updateInsured(payload);
 
         // Create Task for Agency
+        const activePolicies = formData.policies?.filter((p: any) => p.active).map((p: any) => p.policyNumber).join(', ') || 'None';
+        
         await nowCertsApi.insertTask({
             CreatorName: "Client Portal",
             title: `Profile Update: ${formData.firstName} ${formData.lastName}`,
-            description: `Client updated profile information via portal. Please review changes for policy impacts.`,
+            description: `Client updated profile information via portal. Please review changes for policy impacts.\nActive Policies: ${activePolicies}`,
             category_name: "Policy Change",
             status: "New",
             completion: 0,
@@ -335,7 +352,7 @@ export const ProfileEditModal: React.FC<{ user: any; onClose: () => void; onUpda
                                             : 'bg-white/5 text-slate-400 hover:bg-white/10'
                                         }`}
                                     >
-                                        {p.firstName} {p.lastName} ({p.insuredType === 0 ? 'Commercial' : 'Personal'})
+                                        {p.firstName} {p.lastName} ({getInsuredTypeId(p.insuredType) === 0 ? 'Commercial' : 'Personal'})
                                     </button>
                                 ))}
                             </div>

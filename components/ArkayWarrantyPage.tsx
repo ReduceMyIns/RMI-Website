@@ -5,6 +5,12 @@ import { Link } from 'react-router-dom';
 const ArkayWarrantyPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Arkay Auto & RV Warranty | Extended Vehicle Protection"
+        description="Protect your vehicle from unexpected repair costs with Arkay Auto Warranty. Comprehensive coverage for cars, trucks, and RVs with 24/7 roadside assistance."
+        canonicalUrl="https://www.reducemyinsurance.net/arkay-warranty"
+        keywords={['auto warranty', 'RV warranty', 'extended vehicle protection', 'Arkay warranty', 'car repair insurance']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

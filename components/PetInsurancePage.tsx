@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, PawPrint, ExternalLink, Heart, Shield, CheckCircle2, Zap, Stethoscope, Bone, Languages, Syringe, Percent, Clock, Sliders } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEOHead from './SEOHead';
 
 const PetInsurancePage: React.FC = () => {
   const [showKanguro, setShowKanguro] = useState(false);
@@ -12,6 +13,12 @@ const PetInsurancePage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Pet Insurance Quotes | Protect Your Best Friend"
+        description="Comprehensive pet insurance for dogs and cats in Murfreesboro. Coverage for vet bills, wellness exams, and emergencies with top-rated insurers."
+        canonicalUrl="https://www.reducemyinsurance.net/pet-insurance"
+        keywords={['pet insurance', 'dog insurance', 'cat insurance', 'vet bill coverage', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

@@ -10,6 +10,7 @@ import { analyzeMedia, getAIResponse, decodeVin, checkVehicleRecalls, fetchRecal
 import { dbService } from '../services/dbService';
 import AIHomeInspection from './AIHomeInspection';
 import AIVehicleInspection from './AIVehicleInspection';
+import SEOHead from './SEOHead';
 
 // Helper for multi-page PDF text
 const addTextToPdf = (doc: jsPDF, text: string, x: number, initialY: number, maxWidth: number, lineHeight: number) => {
@@ -506,6 +507,12 @@ const AIToolsPage: React.FC<{ user?: any }> = ({ user }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      <SEOHead 
+        title="AI Insurance Tools | Policy Decoder & Risk Analysis"
+        description="Access our suite of AI-powered insurance tools. Decode policies, check vehicle recalls, generate bills of sale, and create safety plans instantly."
+        canonicalUrl="https://www.reducemyinsurance.net/tools"
+        keywords={['AI insurance tools', 'policy decoder', 'recall checker', 'bill of sale generator', 'safety plan generator', 'business plan AI']}
+      />
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2">

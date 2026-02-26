@@ -2,10 +2,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Hammer, HardHat, ArrowLeft, Building2, Layers, AlertTriangle } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const BuildersRiskPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Builders Risk Insurance | Construction Coverage"
+        description="Protect your construction projects with Builders Risk insurance. Coverage for materials, structures in progress, and theft for Murfreesboro developers."
+        canonicalUrl="https://www.reducemyinsurance.net/builders-risk"
+        keywords={['builders risk insurance', 'construction insurance', 'renovation insurance', 'Murfreesboro construction', 'project insurance']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

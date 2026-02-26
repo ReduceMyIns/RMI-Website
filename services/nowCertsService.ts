@@ -186,6 +186,52 @@ export const nowCertsApi = {
     }
   },
 
+  async insertVehicle(vehicleData: any) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Vehicle/InsertVehicle`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(vehicleData)
+      });
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Insert Vehicle Failed: ${errorText}`);
+      }
+      return await response.json();
+    } catch (e) {
+      console.error("Insert Vehicle Error", e);
+      throw e;
+    }
+  },
+
+  async insertDriver(driverData: any) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/Driver/InsertDriver`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(driverData)
+      });
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Insert Driver Failed: ${errorText}`);
+      }
+      return await response.json();
+    } catch (e) {
+      console.error("Insert Driver Error", e);
+      throw e;
+    }
+  },
+
   async insertTask(task: any) {
     try {
       const token = await this.getAccessToken();

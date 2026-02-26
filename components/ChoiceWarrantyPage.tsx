@@ -5,6 +5,12 @@ import { Link } from 'react-router-dom';
 const ChoiceWarrantyPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Choice Home Warranty | Protect Your Home Systems"
+        description="Get the #1 rated home warranty from Choice Home Warranty. Protect your major home systems and appliances from unexpected breakdowns."
+        canonicalUrl="https://www.reducemyinsurance.net/choice-warranty"
+        keywords={['home warranty', 'Choice Home Warranty', 'appliance protection', 'home system coverage']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

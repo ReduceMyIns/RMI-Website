@@ -9,6 +9,12 @@ const LifePage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Life Insurance Plans | Term, Whole & Universal Life"
+        description="Secure your family's future with affordable life insurance. Compare term, whole, and universal life policies from top-rated carriers."
+        canonicalUrl="https://www.reducemyinsurance.net/life"
+        keywords={['life insurance', 'term life', 'whole life', 'universal life', 'family security']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

@@ -3,12 +3,19 @@ import React, { useState } from 'react';
 import { ArrowLeft, HardHat, HeartPulse, Scale, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NowCertsIframe from './NowCertsIframe';
+import SEOHead from './SEOHead';
 
 const WorkersCompPage: React.FC = () => {
   const [showQuote, setShowQuote] = useState(false);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Workers' Compensation Insurance | Murfreesboro TN"
+        description="Mandatory workers' comp coverage for Murfreesboro businesses. Protect your employees and your business from workplace injury lawsuits."
+        canonicalUrl="https://www.reducemyinsurance.net/workers-comp"
+        keywords={['workers compensation', 'workers comp insurance', 'employee insurance', 'Murfreesboro business', 'TN workers comp']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

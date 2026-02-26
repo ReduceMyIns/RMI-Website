@@ -5,6 +5,12 @@ import { Link } from 'react-router-dom';
 const HomeSecurityPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Home Security Systems | ADT & Cove Smart Security"
+        description="Secure your home with top-rated security systems. Compare professional installation from ADT with flexible DIY options from Cove Smart."
+        canonicalUrl="https://www.reducemyinsurance.net/home-security"
+        keywords={['home security', 'ADT security', 'Cove smart', 'DIY security', 'professional monitoring']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

@@ -19,6 +19,7 @@ import { QuoteRequest, Resident, Vehicle, LeadData, CommercialRatingData } from 
 import { getIndustryBySlug, IndustryProfile } from '../data/industryData';
 
 import PortalAuth from './PortalAuth';
+import SEOHead from './SEOHead';
 
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
@@ -579,6 +580,12 @@ const QuoteForm: React.FC = () => {
   if (step === 'LANDING') {
       return (
           <div className="max-w-4xl mx-auto py-12">
+              <SEOHead 
+                title="Get an Insurance Quote | AI-Powered Risk Analysis"
+                description="Start your insurance application today. Our AI-powered platform analyzes your risk profile to find the best coverage at the lowest rates."
+                canonicalUrl="https://www.reducemyinsurance.net/apply"
+                keywords={['insurance quote', 'apply for insurance', 'risk analysis', 'Murfreesboro TN']}
+              />
               <PortalAuth defaultIsRegistering={true} onAuthenticated={(user) => {
                   setLeadData(prev => ({ 
                       ...prev, 

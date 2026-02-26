@@ -9,6 +9,12 @@ const DentalPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Dental & Vision Insurance | Affordable Family Plans"
+        description="Compare dental and vision insurance plans. Coverage for cleanings, major dental work, eye exams, and eyewear starting at $30/month."
+        canonicalUrl="https://www.reducemyinsurance.net/dental-vision"
+        keywords={['dental insurance', 'vision insurance', 'family dental plans', 'eye exams', 'affordable dental']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

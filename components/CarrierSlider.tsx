@@ -5,13 +5,13 @@ import { Link } from 'react-router-dom';
 
 const carriers = [
   { name: 'Progressive', src: '/Progressive Mobile.png', slug: 'progressive' },
-  { name: 'Travelers', src: '/Travelers.png', slug: 'travelers' },
+  { name: 'Travelers', src: '/Travelers Mobile.jpg', slug: 'travelers' },
   { name: 'Nationwide', src: '/Nationwide Mobile.jpg', slug: 'nationwide' },
   { name: 'Liberty Mutual', src: '/Liberty Mutual.jpg', slug: 'liberty-mutual' },
   { name: 'The Hartford', src: '/The Hartford.png', slug: 'the-hartford' },
   { name: 'SafeCo', src: '/SafeCo Mobile.jpg', slug: 'safeco' },
   { name: 'Hiscox', src: '/Hiscox.png', slug: 'hiscox' },
-  { name: 'Mercury', src: '/Mercury.png', slug: 'mercury' },
+  { name: 'Openly', src: '/Openly transparent logo.png', slug: 'openly' },
   { name: 'Geico', src: '/geico-logo.png', slug: 'geico' },
   { name: 'Next', src: '/Next Insurance.png', slug: 'next-insurance' },
   { name: 'Encompass', src: '/Encompass.png', slug: 'encompass' },

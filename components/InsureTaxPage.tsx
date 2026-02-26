@@ -1,9 +1,16 @@
 import React from 'react';
 import { Shield, CheckCircle2, ArrowRight, Calculator, FileText, PieChart, DollarSign, Users, AlertTriangle, Zap, Building2, Scale } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const InsureTaxPage: React.FC = () => {
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <SEOHead 
+        title="IRS Audit Insurance | InsureTax Protection"
+        description="Protect your business from IRS audits with InsureTax. Covers penalties, interest, and professional defense costs. Backed by Lloyd's of London."
+        canonicalUrl="https://www.reducemyinsurance.net/insure-tax"
+        keywords={['IRS audit insurance', 'tax liability insurance', 'audit protection', 'InsureTax', 'Murfreesboro TN']}
+      />
       <div className="max-w-7xl mx-auto px-6">
         {/* Hero Section */}
         <div className="glass-card rounded-[3rem] p-8 md:p-16 relative overflow-hidden mb-12 border border-blue-500/20">

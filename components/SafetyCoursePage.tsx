@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { dbService } from '../services/dbService';
 import { auth } from '../services/firebase';
 import { jsPDF } from "jspdf";
+import SEOHead from './SEOHead';
 
 const QUESTIONS = [
   {
@@ -245,6 +246,12 @@ const SafetyCoursePage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 text-center">
+      <SEOHead 
+        title="Defensive Driving Safety Course | Earn Your Certificate"
+        description="Complete our online defensive driving course to qualify for insurance discounts. Earn your official safety certificate in minutes."
+        canonicalUrl="https://www.reducemyinsurance.net/safety-course"
+        keywords={['defensive driving', 'safety course', 'insurance discount', 'driving certificate', 'safe driver']}
+      />
       <Link to="/tools" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group self-start absolute top-32 left-6 lg:left-auto">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Tools
       </Link>

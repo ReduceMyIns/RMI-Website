@@ -2,12 +2,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Waves, Umbrella, Home, ArrowLeft, ExternalLink, MapPin, AlertTriangle, Droplets } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const FloodPage: React.FC = () => {
   const neptuneUrl = "https://neptuneflood.com/consumer-app/?source=ZcIJr8qT61%2BJOOeTqKXcTlY%2FXoRDT%2ByYz8ojIB7LpqhcMkJYbf%2BwDu6BNYEjIbK4cUvCbL4HKk8GRHpKzL90wV4dheppAvwXvJCvUHbU4v0%3D";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Flood Insurance Quotes | Private Flood Options"
+        description="Protect your home from flood damage with private flood insurance. Higher limits and better coverage than NFIP for Murfreesboro residents."
+        canonicalUrl="https://www.reducemyinsurance.net/flood"
+        keywords={['flood insurance', 'private flood insurance', 'Neptune flood', 'NFIP alternative', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

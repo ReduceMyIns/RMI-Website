@@ -2,10 +2,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home, ShieldCheck, ArrowLeft, Umbrella, Wind, Flame, Droplets, Zap } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const HomePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Homeowners Insurance | Protect Your Sanctuary"
+        description="Comprehensive home insurance coverage for Murfreesboro residents. AI-driven risk analysis for fire, theft, wind, and liability protection."
+        canonicalUrl="https://www.reducemyinsurance.net/home"
+        keywords={['homeowners insurance', 'home insurance Murfreesboro', 'HO-3 policy', 'HO-5 policy', 'property insurance']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

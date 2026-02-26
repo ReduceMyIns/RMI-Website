@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, FileSignature, Search, MapPin, ExternalLink, ShieldCheck, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BONDS_DATA, Bond } from '../data/bondsData';
+import SEOHead from './SEOHead';
 
 const STATES = ['ALL', 'TN', 'KY', 'GA', 'AL', 'FL', 'VA'];
 
@@ -47,6 +48,12 @@ const BondsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Surety Bonds Online | Instant License & Permit Bonds"
+        description="Get instant surety bonds online. License and permit bonds for contractors, car dealers, and notaries in TN, KY, GA, and more."
+        canonicalUrl="https://www.reducemyinsurance.net/bonds"
+        keywords={['surety bonds', 'license and permit bonds', 'contractor bond', 'notary bond', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

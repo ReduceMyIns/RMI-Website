@@ -2,10 +2,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Umbrella, Shield, ArrowLeft, TrendingUp, AlertOctagon, Scale } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const UmbrellaPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Umbrella Insurance | Excess Liability Protection"
+        description="Protect your assets with an extra $1M to $5M of liability coverage. Umbrella insurance for Murfreesboro residents against major lawsuits."
+        canonicalUrl="https://www.reducemyinsurance.net/umbrella"
+        keywords={['umbrella insurance', 'excess liability', 'asset protection', 'liability coverage', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

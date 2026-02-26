@@ -2,6 +2,7 @@
 import React from 'react';
 import { ArrowLeft, Users, Building, Dumbbell, Ticket, ExternalLink, Shield, CheckCircle2, AlertCircle, Trophy, Medal, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEOHead from './SEOHead';
 
 const PROGRAMS = [
   {
@@ -71,6 +72,12 @@ const SCENARIOS = [
 const SportsInsurancePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Sports & Recreation Insurance | Team & League Coverage"
+        description="Specialized liability and accident insurance for sports teams, leagues, and events. Instant online quotes for Murfreesboro youth sports and facilities."
+        canonicalUrl="https://www.reducemyinsurance.net/sports-insurance"
+        keywords={['sports insurance', 'league insurance', 'team insurance', 'recreation insurance', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

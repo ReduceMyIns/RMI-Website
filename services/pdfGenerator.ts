@@ -41,7 +41,7 @@ export const generateDecPage = (policy: any, details: any) => {
   let yPos = 110;
 
   // Coverages
-  const coverages = [];
+  const coverages: any[] = [];
   
   // Check for main coverages
   if (details.coverages && details.coverages.length > 0) {
@@ -68,6 +68,37 @@ export const generateDecPage = (policy: any, details: any) => {
               c.deductiblesFormatted || '-'
           ]);
       });
+  }
+  // Fallback for Homeowners: Parse XML from properties if available
+  else if (details.properties && details.properties.length > 0 && details.properties[0].coveragesXML) {
+      const xml = details.properties[0].coveragesXML;
+      // Simple regex to extract CoverageCd and Limit
+      // Matches <CoverageCd>CODE</CoverageCd> ... <FormatInteger>LIMIT</FormatInteger>
+      // This is a rough parser for the specific XML format provided
+      const coverageRegex = /<CoverageCd>(.*?)<\/CoverageCd>.*?<FormatInteger>(.*?)<\/FormatInteger>/gs;
+      let match;
+      while ((match = coverageRegex.exec(xml)) !== null) {
+          const code = match[1];
+          const limit = match[2];
+          
+          // Map common codes to descriptions
+          let desc = code;
+          if (code === 'DWELL') desc = 'Dwelling';
+          if (code === 'OS') desc = 'Other Structures';
+          if (code === 'PP') desc = 'Personal Property';
+          if (code === 'LOU') desc = 'Loss of Use';
+          if (code === 'PL') desc = 'Personal Liability';
+          if (code === 'MED') desc = 'Medical Payments';
+
+          coverages.push([
+              desc,
+              `$${parseInt(limit).toLocaleString()}`,
+              '-' // Deductible might be separate
+          ]);
+      }
+      
+      // Try to find deductible separately if possible, or just list it as N/A for now
+      // The XML structure for deductible wasn't fully provided in the snippet, so we'll stick to limits.
   }
 
   if (coverages.length > 0) {
@@ -151,7 +182,7 @@ export const generateDecPage = (policy: any, details: any) => {
       yPos = (doc as any).lastAutoTable.finalY + 15;
   }
 
-  // Properties
+  // Properties & Lienholders
   if (details.properties && details.properties.length > 0) {
       if (yPos > 250) { doc.addPage(); yPos = 20; }
       doc.setFontSize(12);
@@ -172,6 +203,30 @@ export const generateDecPage = (policy: any, details: any) => {
           headStyles: { fillColor: [41, 128, 185] }
       });
       yPos = (doc as any).lastAutoTable.finalY + 15;
+
+      // Lienholders
+      details.properties.forEach((p: any) => {
+          if (p.lienHolders && p.lienHolders.length > 0) {
+              if (yPos > 250) { doc.addPage(); yPos = 20; }
+              doc.setFontSize(10);
+              doc.text(`Lienholders / Mortgagees for ${p.addressLine1}`, 14, yPos);
+              
+              const lienData = p.lienHolders.map((l: any) => [
+                  l.name || 'Unknown',
+                  l.address || '-',
+                  l.loanNumber || '-'
+              ]);
+
+              autoTable(doc, {
+                  startY: yPos + 5,
+                  head: [['Name', 'Address', 'Loan Number']],
+                  body: lienData,
+                  theme: 'plain',
+                  styles: { fontSize: 8 }
+              });
+              yPos = (doc as any).lastAutoTable.finalY + 10;
+          }
+      });
   }
 
   doc.save(`Dec_Page_${policy.number}.pdf`);

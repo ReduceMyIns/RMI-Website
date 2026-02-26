@@ -9,6 +9,12 @@ const DisabilityPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Disability & Accident Insurance | Income Protection"
+        description="Protect your livelihood with disability and accident insurance. Ensure your bills are paid if you're unable to work due to injury or illness."
+        canonicalUrl="https://www.reducemyinsurance.net/disability"
+        keywords={['disability insurance', 'accident insurance', 'income protection', 'short term disability', 'long term disability']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>

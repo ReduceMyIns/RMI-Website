@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { INDUSTRIES } from '../data/industryData';
+import SEOHead from './SEOHead';
 
 const PRODUCTS = {
   Personal: [
@@ -178,6 +179,12 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      <SEOHead 
+        title="Insurance Products & Coverage Options"
+        description="Explore our comprehensive range of insurance products including Auto, Home, Business, Life, and Specialty coverage. AI-optimized rates from top carriers."
+        canonicalUrl="https://www.reducemyinsurance.net/products"
+        keywords={['insurance products', 'coverage options', 'auto insurance', 'home insurance', 'business insurance', 'life insurance']}
+      />
       {/* Hero Header */}
       <div className="text-center space-y-6">
         <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full glass border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">

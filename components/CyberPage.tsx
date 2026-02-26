@@ -2,10 +2,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Server, ArrowLeft, ShieldAlert, Fingerprint, Database } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const CyberPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      <SEOHead 
+        title="Cyber Liability Insurance | Data Breach Protection"
+        description="Protect your business from ransomware, data breaches, and phishing. Cyber liability insurance for Murfreesboro businesses with data recovery support."
+        canonicalUrl="https://www.reducemyinsurance.net/cyber"
+        keywords={['cyber insurance', 'data breach insurance', 'ransomware protection', 'cyber liability', 'Murfreesboro TN']}
+      />
       <Link to="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
       </Link>
