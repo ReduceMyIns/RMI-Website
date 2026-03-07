@@ -11,16 +11,16 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
-        host: '0.0.0.0',
+        hmr: process.env.DISABLE_HMR === 'true' ? false : undefined,
       },
       plugins: [
         react(),
         tailwindcss(),
       ],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || ''),
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''),
+        'process.env.NOWCERTS_REFRESH_TOKEN': JSON.stringify(env.NOWCERTS_REFRESH_TOKEN || process.env.NOWCERTS_REFRESH_TOKEN || '')
       },
       resolve: {
         alias: {

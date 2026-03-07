@@ -6,7 +6,7 @@ import {
   Zap, Loader2, Bot, Car, Home, Edit3, Trash2, Plus, AlertCircle,
   CreditCard, Sliders, Check, Building, Briefcase, ExternalLink, ArrowRight,
   ChevronDown, ChevronUp, AlertTriangle, Search, DollarSign, Users, Factory, HelpCircle,
-  Calendar, Mail, Calculator, Ban, Undo2, Bike, FileText, Upload, GraduationCap, Lock
+  Calendar, Mail, Calculator, Ban, Undo2, Bike, FileText, Upload, GraduationCap, Lock, Truck, Activity
 } from 'lucide-react';
 import { jsPDF } from "jspdf"; 
 import { createUserWithEmailAndPassword, signInAnonymously } from "firebase/auth";
@@ -17,11 +17,26 @@ import { dbService } from '../services/dbService';
 import { nowCertsApi } from '../services/nowCertsService';
 import { QuoteRequest, Resident, Vehicle, LeadData, CommercialRatingData } from '../types';
 import { getIndustryBySlug, IndustryProfile } from '../data/industryData';
+import { SIC_INDUSTRIES, SICIndustry } from '../data/sicIndustries';
 
 import PortalAuth from './PortalAuth';
 import SEOHead from './SEOHead';
 
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
+
+const STANDARD_OCCUPATIONS = [
+  "Accountant", "Actor", "Administrator", "Architect", "Artist", "Attorney", "Banker", "Barber", "Biologist", "Broker",
+  "Carpenter", "Cashier", "Chef", "Chemist", "Clergy", "Clerk", "Coach", "Computer Programmer", "Construction Worker", "Consultant",
+  "Counselor", "Dentist", "Designer", "Doctor", "Driver", "Editor", "Electrician", "Engineer", "Farmer", "Firefighter",
+  "Flight Attendant", "Homemaker", "Insurance Agent", "Journalist", "Judge", "Laborer", "Lawyer", "Librarian", "Manager", "Mechanic",
+  "Military", "Musician", "Nurse", "Pharmacist", "Photographer", "Physician", "Pilot", "Plumber", "Police Officer", "Professor",
+  "Real Estate Agent", "Receptionist", "Reporter", "Retired", "Salesperson", "Scientist", "Secretary", "Social Worker", "Student", "Teacher",
+  "Technician", "Therapist", "Truck Driver", "Unemployed", "Veterinarian", "Waiter/Waitress", "Writer", "Other"
+];
+
+const RELATIONSHIP_TYPES = [
+  "Self", "Spouse", "Child", "Parent", "Sibling", "Grandparent", "Grandchild", "Employee", "Partner", "Other"
+];
 
 type FlowStep = 'LANDING' | 'LEAD_CAPTURE' | 'REFINEMENT' | 'COVERAGE' | 'SUMMARY' | 'COMMERCIAL_RISK' | 'COMMERCIAL_DETAILS' | 'COMMERCIAL_COVERAGE' | 'COMMERCIAL_SUMMARY';
 
@@ -45,7 +60,7 @@ const QuoteForm: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addressInputRef = useRef<HTMLInputElement>(null);
   
-  const [step, setStep] = useState<FlowStep>('LEAD_CAPTURE');
+  const [step, setStep] = useState<FlowStep>('LANDING');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiStatus, setAiStatus] = useState('');
   const [activeIndustry, setActiveIndustry] = useState<IndustryProfile | null>(null);
@@ -126,7 +141,36 @@ const QuoteForm: React.FC = () => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user && step === 'LANDING') {
          // Prefill from profile
-         const profile = await dbService.getUserProfile(user.uid);
+         let profile = await dbService.getUserProfile(user.uid);
+         
+         // If no profile found, try to find existing lead by email to prefill
+         if (!profile && user.email) {
+             const existingLead = await dbService.findExistingLead(user.email, '');
+             if (existingLead) {
+                 profile = existingLead;
+             } else {
+                 // Try NowCerts as last resort
+                 try {
+                     const ncResults = await nowCertsApi.searchInsured({ email: user.email });
+                     if (ncResults && ncResults.value && ncResults.value.length > 0) {
+                         const insured = ncResults.value[0];
+                         profile = {
+                             firstName: insured.firstName,
+                             lastName: insured.lastName,
+                             email: insured.eMail,
+                             phone: insured.cellPhone || insured.phone,
+                             address: insured.addressLine1,
+                             city: insured.city,
+                             state: insured.state,
+                             zip: insured.zipCode
+                         };
+                     }
+                 } catch (e) {
+                     console.warn("NowCerts search failed", e);
+                 }
+             }
+         }
+
          if (profile) {
              setLeadData(prev => ({ 
                ...prev, 
@@ -140,14 +184,22 @@ const QuoteForm: React.FC = () => {
                address: profile.street || profile.address || profile.addressLine1 || prev.address,
                city: profile.city || prev.city,
                state: profile.state || prev.state,
-               zip: profile.zip || profile.zipCode || prev.zip
+               zip: profile.zip || profile.zipCode || prev.zip,
+               type: location.state?.defaultType || 'Personal'
              }));
+             
+             if (location.state?.defaultLine) {
+                 setFormData(prev => ({
+                     ...prev,
+                     bundledLines: [location.state.defaultLine]
+                 }));
+             }
          }
          setStep('LEAD_CAPTURE');
       }
     });
     return () => unsubscribe();
-  }, [step]);
+  }, [step, location.state]);
   
   // UI State for Refinement Step
   const [expandedDriverId, setExpandedDriverId] = useState<string | null>(null);
@@ -188,6 +240,31 @@ const QuoteForm: React.FC = () => {
 
   const [sicSearchTerm, setSicSearchTerm] = useState('');
   const [sicResults, setSicResults] = useState<any[]>([]);
+  
+  // Occupation Search State
+  const [activeOccupationId, setActiveOccupationId] = useState<string | null>(null);
+  const [occupationSuggestions, setOccupationSuggestions] = useState<SICIndustry[]>([]);
+
+  const handleOccupationChange = (residentId: string, value: string) => {
+      updateResident(residentId, 'occupation', value);
+      setActiveOccupationId(residentId);
+      if (value.length > 1) {
+          const lower = value.toLowerCase();
+          const filtered = SIC_INDUSTRIES.filter(ind => 
+              ind.name.toLowerCase().includes(lower) || ind.sicCode.includes(lower)
+          ).slice(0, 20);
+          setOccupationSuggestions(filtered);
+      } else {
+          setOccupationSuggestions([]);
+      }
+  };
+
+  const selectOccupation = (residentId: string, industry: SICIndustry) => {
+      updateResident(residentId, 'occupation', industry.name);
+      updateResident(residentId, 'sicCode', industry.sicCode);
+      setActiveOccupationId(null);
+      setOccupationSuggestions([]);
+  };
 
   // Full Application State (Personal)
   const [formData, setFormData] = useState<QuoteRequest>({
@@ -215,6 +292,15 @@ const QuoteForm: React.FC = () => {
     if (location.state?.prefillData) {
         const pd = location.state.prefillData;
         setLeadData(prev => ({ ...prev, ...pd }));
+    }
+
+    if (location.state?.defaultType) {
+        setLeadData(prev => ({ ...prev, type: location.state.defaultType }));
+        setFormData(prev => ({ ...prev, type: location.state.defaultType }));
+    }
+
+    if (location.state?.defaultLine) {
+        setFormData(prev => ({ ...prev, bundledLines: [location.state.defaultLine] }));
     }
   }, [location.state]);
 
@@ -330,6 +416,20 @@ const QuoteForm: React.FC = () => {
       }
 
       // 2. Save Lead
+      // Ensure authenticated (anonymously if needed)
+      if (!auth.currentUser) {
+          try {
+              await signInAnonymously(auth);
+          } catch (authErr: any) {
+              if (authErr.code === 'auth/admin-restricted-operation' || authErr.message?.includes('admin-restricted-operation')) {
+                  console.warn("Anonymous Auth Restricted: Proceeding in restricted mode.");
+              } else {
+                  console.error("Anonymous Auth Failed:", authErr);
+              }
+              // Continue anyway, dbService might have fallback or rules might allow public write (unlikely but possible)
+          }
+      }
+
       const leadId = await dbService.saveQuoteRequest({ 
         ...leadData, 
         industry: activeIndustry?.name || 'General',
@@ -362,18 +462,24 @@ const QuoteForm: React.FC = () => {
               });
           }
           // Property Research
-          if (currentFormData.bundledLines.includes('Home')) {
+          const isHomeowner = currentFormData.fenrisData?.homeownerStatus === 'Homeowner' || currentFormData.fenrisData?.homeownerStatus === 'Renter';
+          if (currentFormData.bundledLines.includes('Home') || isHomeowner) {
              setAiStatus('Analyzing Property...');
              const homeResearch = await researchProperty(`${leadData.address}, ${leadData.city}, ${leadData.state} ${leadData.zip}`);
              if (homeResearch && homeResearch.yearBuilt) {
                 currentFormData.properties = [{
-                   id: 'prop-1', type: 'Home', address: leadData.address,
+                   id: 'prop-1', type: currentFormData.fenrisData?.homeownerStatus === 'Renter' ? 'Renters' : 'Home', address: leadData.address,
                    yearBuilt: homeResearch.yearBuilt, sqft: homeResearch.sqft || 2000,
                    constructionType: homeResearch.exteriorMaterials || 'Frame',
                    roofType: homeResearch.roofType || 'Asphalt Shingle',
                    roofAge: homeResearch.estimatedRoofAge || 5, hasPool: homeResearch.hasPool || false,
                    isGated: false, occupancy: 'Primary'
                 }];
+                // Add Home/Renters to bundled lines if not there
+                const lineToAdd = currentFormData.fenrisData?.homeownerStatus === 'Renter' ? 'Renters' : 'Home';
+                if (!currentFormData.bundledLines.includes(lineToAdd)) {
+                   currentFormData.bundledLines.push(lineToAdd);
+                }
              }
           }
           
@@ -470,15 +576,17 @@ const QuoteForm: React.FC = () => {
   const addVehicle = () => {
     const newVehicle: Vehicle = {
       id: `new-veh-${Date.now()}`, year: new Date().getFullYear(), make: '', model: '', type: 'Car', usage: 'commute', lien: false, status: 'included', annualMileage: 12000,
-      coverages: { comp: '1000', coll: '1000', rental: 'None', towing: 'None' }
+      coverages: { comp: '1000', coll: '1000', rental: 'None', towing: 'None' },
+      active: true
     };
     setFormData(prev => ({ ...prev, vehicles: [...prev.vehicles, newVehicle] }));
     setExpandedVehicleId(newVehicle.id);
   };
 
   const deleteVehicle = (id: string) => {
-    if (window.confirm("Delete vehicle?")) {
-        setFormData(prev => ({ ...prev, vehicles: prev.vehicles.filter(v => v.id !== id) }));
+    const reason = window.prompt("Please provide a reason for removing this vehicle:");
+    if (reason) {
+        setFormData(prev => ({ ...prev, vehicles: prev.vehicles.map(v => v.id === id ? { ...v, active: false, deletionReason: reason } : v) }));
     }
   };
 
@@ -526,6 +634,16 @@ const QuoteForm: React.FC = () => {
 
   const handleNextToCoverage = () => {
     // Basic validation logic
+    if (leadData.type === 'Personal') {
+        const hasMarriedDriver = formData.residents.some(r => r.maritalStatus === 'Married' && r.status !== 'excluded');
+        if (hasMarriedDriver) {
+            const hasSpouse = formData.residents.some(r => r.relationship === 'Spouse' && r.status !== 'excluded');
+            if (!hasSpouse) {
+                alert("A driver is listed as Married. Please add their Spouse to the policy, even if they are excluded from driving.");
+                return;
+            }
+        }
+    }
     setStep('COVERAGE');
   };
 
@@ -654,16 +772,31 @@ const QuoteForm: React.FC = () => {
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input required placeholder="First Name" value={leadData.firstName} onChange={e => setLeadData({...leadData, firstName: e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
-                  <input required placeholder="Last Name" value={leadData.lastName} onChange={e => setLeadData({...leadData, lastName: e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  <div className="flex flex-col justify-end">
+                    <label className="text-xs font-bold text-slate-400 mb-2 ml-1 uppercase tracking-wider">First Name</label>
+                    <input required placeholder="First Name" value={leadData.firstName} onChange={e => setLeadData({...leadData, firstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  </div>
+                  <div className="flex flex-col justify-end">
+                    <label className="text-xs font-bold text-slate-400 mb-2 ml-1 uppercase tracking-wider">Last Name</label>
+                    <input required placeholder="Last Name" value={leadData.lastName} onChange={e => setLeadData({...leadData, lastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  </div>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="date" required placeholder="Date of Birth" value={leadData.dob} onChange={e => setLeadData({...leadData, dob: e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
-                  <input type="tel" required placeholder="Phone Number" value={leadData.phone} onChange={e => handlePhoneChange(e.target.value)} maxLength={12} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  <div className="flex flex-col justify-end">
+                    <label className="text-xs font-bold text-slate-400 mb-2 ml-1 uppercase tracking-wider">Date of Birth</label>
+                    <input type="date" required value={leadData.dob} onChange={e => setLeadData({...leadData, dob: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  </div>
+                  <div className="flex flex-col justify-end">
+                    <label className="text-xs font-bold text-slate-400 mb-2 ml-1 uppercase tracking-wider">Phone Number</label>
+                    <input type="tel" required placeholder="Phone Number" value={leadData.phone} onChange={e => handlePhoneChange(e.target.value)} maxLength={12} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  </div>
                </div>
 
-               <input type="email" required placeholder="Email Address" value={leadData.email} onChange={e => setLeadData({...leadData, email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+               <div className="flex flex-col justify-end">
+                 <label className="text-xs font-bold text-slate-400 mb-2 ml-1 uppercase tracking-wider">Email Address</label>
+                 <input type="email" required placeholder="Email Address" value={leadData.email} onChange={e => setLeadData({...leadData, email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+               </div>
 
                <div className="space-y-4 pt-4 border-t border-white/10">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Risk Location</span>
@@ -774,6 +907,7 @@ const QuoteForm: React.FC = () => {
                                    <option value="Moved Out">No Longer Resides Here</option>
                                    <option value="Never Licensed">Never Licensed / No Permit</option>
                                    <option value="Suspended">License Suspended/Revoked</option>
+                                   <option value="Unknown Individual">Unknown Individual</option>
                                 </select>
                              </div>
                            )}
@@ -783,24 +917,81 @@ const QuoteForm: React.FC = () => {
                            <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">DOB</label><input type="date" value={resident.dob} onChange={e => updateResident(resident.id, 'dob', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500" /></div>
                            <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">License #</label><input value={resident.licenseNumber || ''} onChange={e => updateResident(resident.id, 'licenseNumber', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500" /></div>
                            <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">State</label><select value={resident.licenseState || leadData.state} onChange={e => updateResident(resident.id, 'licenseState', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500">{US_STATES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+                           
+                           <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">Relationship</label>
+                              <select value={resident.relationship || 'Other'} onChange={e => updateResident(resident.id, 'relationship', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500">
+                                 {RELATIONSHIP_TYPES.map(r => <option key={r} value={r}>{r}</option>)}
+                              </select>
+                           </div>
+
+                           <div className="space-y-2 relative">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase">Occupation</label>
+                              <input 
+                                  value={resident.occupation || ''} 
+                                  onChange={e => updateResident(resident.id, 'occupation', e.target.value)} 
+                                  list={`occupations-${resident.id}`}
+                                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500" 
+                                  placeholder="Type to search..."
+                              />
+                              <datalist id={`occupations-${resident.id}`}>
+                                  {STANDARD_OCCUPATIONS.map(occ => <option key={occ} value={occ} />)}
+                              </datalist>
+                           </div>
+
+                           <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">Marital Status</label>
+                              <select value={resident.maritalStatus || ''} onChange={e => updateResident(resident.id, 'maritalStatus', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500">
+                                 <option value="">Select...</option>
+                                 <option value="Single">Single</option>
+                                 <option value="Married">Married</option>
+                                 <option value="Divorced">Divorced</option>
+                                 <option value="Widowed">Widowed</option>
+                                 <option value="Separated">Separated</option>
+                              </select>
+                           </div>
+
+
+
+                           <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">Email</label><input type="email" value={resident.email || ''} onChange={e => updateResident(resident.id, 'email', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500" /></div>
+                           <div className="space-y-2"><label className="text-[10px] font-bold text-slate-500 uppercase">Phone</label><input type="tel" value={resident.phone || ''} onChange={e => updateResident(resident.id, 'phone', formatPhoneNumber(e.target.value))} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500" /></div>
 
                            {/* YOUNG DRIVER LOGIC */}
                            {isStudent && resident.status === 'rated' && (
                                <div className="col-span-full mt-2 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                                    <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                       <GraduationCap className="w-4 h-4" /> Good Student Discount Eligibility
+                                       <GraduationCap className="w-4 h-4" /> Student Status
                                    </h4>
-                                   <div className="flex items-center justify-between gap-4">
-                                       <div className="text-xs text-slate-300">Does {resident.firstName} have a 3.0 (B) average or better?</div>
+                                   <div className="flex items-center justify-between gap-4 mb-4">
+                                       <div className="text-xs text-slate-300">Is {resident.firstName} a full-time student?</div>
                                        <div className="flex gap-4">
-                                           <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`gpa-${resident.id}`} /> Yes</label>
-                                           <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`gpa-${resident.id}`} /> No</label>
+                                           <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`student-${resident.id}`} checked={resident.isStudent === true} onChange={() => updateResident(resident.id, 'isStudent', true)} /> Yes</label>
+                                           <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`student-${resident.id}`} checked={resident.isStudent === false} onChange={() => updateResident(resident.id, 'isStudent', false)} /> No</label>
                                        </div>
                                    </div>
-                                   <div className="mt-3">
-                                       <label className="block text-[10px] text-blue-300/70 mb-1">Upload Transcript (Latest Report Card)</label>
-                                       <input type="file" className="text-xs text-slate-400" />
-                                   </div>
+                                   
+                                   {resident.isStudent && (
+                                      <>
+                                       <div className="flex items-center justify-between gap-4">
+                                           <div className="text-xs text-slate-300">Does {resident.firstName} have a 3.0 GPA or better (B Average for any one semester, or cumulative)?</div>
+                                           <div className="flex gap-4">
+                                               <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`gpa-${resident.id}`} checked={resident.goodStudentDiscount === true} onChange={() => updateResident(resident.id, 'goodStudentDiscount', true)} /> Yes</label>
+                                               <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`gpa-${resident.id}`} checked={resident.goodStudentDiscount === false} onChange={() => updateResident(resident.id, 'goodStudentDiscount', false)} /> No</label>
+                                           </div>
+                                       </div>
+                                       
+                                       <div className="flex items-center justify-between gap-4 mt-2">
+                                           <div className="text-xs text-slate-300">Has {resident.firstName} completed a driver training course?</div>
+                                           <div className="flex gap-4">
+                                               <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`training-${resident.id}`} checked={resident.driverTrainingDiscount === true} onChange={() => updateResident(resident.id, 'driverTrainingDiscount', true)} /> Yes</label>
+                                               <label className="flex items-center gap-2 text-white text-xs font-bold"><input type="radio" name={`training-${resident.id}`} checked={resident.driverTrainingDiscount === false} onChange={() => updateResident(resident.id, 'driverTrainingDiscount', false)} /> No</label>
+                                           </div>
+                                       </div>
+
+                                       <div className="mt-3">
+                                           <label className="block text-[10px] text-blue-300/70 mb-1">Upload Transcript (Latest Report Card)</label>
+                                           <input type="file" className="text-xs text-slate-400" />
+                                       </div>
+                                      </>
+                                   )}
                                </div>
                            )}
                         </div>
@@ -814,7 +1005,7 @@ const QuoteForm: React.FC = () => {
             {/* ... (Existing Vehicles Section) ... */}
             <div className="space-y-4">
                {/* ... vehicle mapping ... */}
-               {formData.vehicles.map((vehicle, idx) => (
+               {formData.vehicles.filter(v => v.active !== false).map((vehicle, idx) => (
                   // ... (Existing Vehicle Card Code - Keeping it brief for this response) ...
                   <div key={vehicle.id} className="glass-card p-6 rounded-2xl border border-white/5 transition-all group space-y-4 relative">
                       <div className="flex justify-between items-start cursor-pointer" onClick={() => toggleVehicleExpansion(vehicle.id)}>
@@ -838,7 +1029,166 @@ const QuoteForm: React.FC = () => {
                                   <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">Model</label><input value={vehicle.model} onChange={e => updateVehicle(vehicle.id, 'model', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-sm" /></div>
                                   <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">VIN</label><input value={vehicle.vin || ''} onChange={e => updateVehicle(vehicle.id, 'vin', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-sm font-mono" /></div>
                               </div>
-                              {/* ... Usage, Mileage, Lienholder inputs same as before ... */}
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Primary Usage</label>
+                                    <select value={vehicle.usage} onChange={e => updateVehicle(vehicle.id, 'usage', e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500">
+                                       <option value="commute">To/From Work or School</option>
+                                       <option value="pleasure">Pleasure / Weekend Only</option>
+                                       <option value="business">Business Use</option>
+                                       <option value="farm">Farm Use</option>
+                                       <option value="collector">Collector / Antique</option>
+                                    </select>
+                                 </div>
+                                 <div className="space-y-2 relative">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase flex justify-between">
+                                        Annual Mileage
+                                        <button onClick={() => { setMileageCalcVehicleId(vehicle.id); setTempWeeklyMiles(''); }} className="text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                                            <Calculator className="w-3 h-3" /> Calc
+                                        </button>
+                                    </label>
+                                    <input type="number" placeholder="e.g. 12000" value={vehicle.annualMileage || ''} onChange={e => updateVehicle(vehicle.id, 'annualMileage', parseInt(e.target.value))} className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500" />
+                                    
+                                    {mileageCalcVehicleId === vehicle.id && (
+                                        <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 border border-white/10 rounded-xl p-4 shadow-xl z-50">
+                                            <h4 className="text-xs font-bold text-white mb-2 flex items-center gap-2"><Calculator className="w-3 h-3 text-blue-400"/> Weekly Mileage Calc</h4>
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="text-[10px] text-slate-500 uppercase">Miles per Week</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={tempWeeklyMiles} 
+                                                        onChange={(e) => setTempWeeklyMiles(e.target.value)}
+                                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-sm"
+                                                        placeholder="e.g. 200"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                                <div className="text-xs text-slate-400">
+                                                    ≈ {parseInt(tempWeeklyMiles || '0') * 52} miles/year
+                                                </div>
+                                                <div className="flex justify-end gap-2">
+                                                    <button onClick={() => setMileageCalcVehicleId(null)} className="px-3 py-1 text-xs text-slate-400 hover:text-white">Cancel</button>
+                                                    <button onClick={() => calculateWeeklyMiles(vehicle.id)} className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg">Apply</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                 </div>
+                              </div>
+
+                              {/* TELEMATICS OPT-IN */}
+                              <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex items-start gap-4">
+                                 <div className="mt-1">
+                                    <input 
+                                       type="checkbox" 
+                                       checked={vehicle.telematicsOptIn || false}
+                                       onChange={e => updateVehicle(vehicle.id, 'telematicsOptIn', e.target.checked)}
+                                       className="w-5 h-5 accent-emerald-500 rounded cursor-pointer"
+                                    />
+                                 </div>
+                                 <div>
+                                    <h4 className="text-emerald-400 font-bold text-sm flex items-center gap-2">
+                                       <Activity className="w-4 h-4" /> Safe Driving Discount (Telematics)
+                                    </h4>
+                                    <p className="text-xs text-emerald-200/70 mt-1">
+                                       Opt-in to a safe driving program (like Snapshot or DriveSafe) to save up to 30%. 
+                                       This uses a mobile app to track driving habits like hard braking and late-night driving.
+                                    </p>
+                                 </div>
+                              </div>
+
+                              {/* RIDESHARE QUESTION */}
+                              <div className="bg-slate-800/50 border border-white/10 p-4 rounded-xl">
+                                 <div className="flex items-center justify-between gap-4">
+                                    <div className="text-sm text-white font-medium">Is this vehicle used for delivery or ride-sharing?</div>
+                                    <div className="flex gap-4">
+                                       <label className="flex items-center gap-2 text-white text-xs font-bold cursor-pointer">
+                                          <input type="radio" name={`rideshare-${vehicle.id}`} checked={vehicle.isRideshare === true} onChange={() => updateVehicle(vehicle.id, 'isRideshare', true)} className="accent-blue-500" /> Yes
+                                       </label>
+                                       <label className="flex items-center gap-2 text-white text-xs font-bold cursor-pointer">
+                                          <input type="radio" name={`rideshare-${vehicle.id}`} checked={vehicle.isRideshare === false} onChange={() => updateVehicle(vehicle.id, 'isRideshare', false)} className="accent-blue-500" /> No
+                                       </label>
+                                    </div>
+                                 </div>
+                                 {vehicle.isRideshare && (
+                                    <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                                       <p className="text-xs text-slate-400">Select all that apply:</p>
+                                       <div className="grid grid-cols-2 gap-2">
+                                          <label className="flex items-center gap-2 text-xs text-white"><input type="checkbox" checked={vehicle.ridesharepassenger} onChange={e => updateVehicle(vehicle.id, 'ridesharepassenger', e.target.checked)} /> Passengers (Uber/Lyft)</label>
+                                          <label className="flex items-center gap-2 text-xs text-white"><input type="checkbox" checked={vehicle.ridesharedelivery} onChange={e => updateVehicle(vehicle.id, 'ridesharedelivery', e.target.checked)} /> Food/Grocery (DoorDash/Instacart)</label>
+                                          <label className="flex items-center gap-2 text-xs text-white"><input type="checkbox" checked={vehicle.rideshareother} onChange={e => updateVehicle(vehicle.id, 'rideshareother', e.target.checked)} /> Package Delivery (Amazon Flex)</label>
+                                       </div>
+                                    </div>
+                                 )}
+                              </div>
+
+                              {/* RECALLS SECTION */}
+                              {vehicle.recalls && vehicle.recalls.length > 0 && (
+                                 <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
+                                    <details className="group">
+                                       <summary className="flex items-center justify-between cursor-pointer list-none">
+                                          <h4 className="text-red-400 font-bold text-sm flex items-center gap-2">
+                                             <AlertTriangle className="w-4 h-4" /> {vehicle.recalls.length} Safety Recalls Found
+                                          </h4>
+                                          <ChevronDown className="w-4 h-4 text-red-400 group-open:rotate-180 transition-transform" />
+                                       </summary>
+                                       <div className="mt-4 space-y-4">
+                                          <p className="text-[10px] text-red-300/70 italic">
+                                             Disclaimer: This list may not be complete and is not vehicle-specific. The recall may have already been fixed. Please check with a dealer for specific details. For informational purposes only.
+                                          </p>
+                                          {vehicle.recalls.map((recall, i) => (
+                                             <div key={i} className="bg-slate-950/50 p-3 rounded-lg border border-red-500/10">
+                                                <div className="text-xs font-bold text-white mb-1">{recall.Component}</div>
+                                                <div className="text-[10px] text-slate-400 mb-2">{recall.Summary}</div>
+                                                <div className="text-[10px] text-emerald-400/80"><span className="font-bold">Remedy:</span> {recall.Remedy}</div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </details>
+                                 </div>
+                              )}
+
+                              {/* COVERAGE SECTION */}
+                              <div className="bg-slate-800/50 border border-white/10 p-4 rounded-xl space-y-4">
+                              <div className="col-span-full mt-4 border-t border-white/10 pt-4">
+                                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                                      <input type="checkbox" checked={vehicle.lien} onChange={e => updateVehicle(vehicle.id, 'lien', e.target.checked)} className="rounded border-white/20 bg-white/5 text-blue-600 focus:ring-blue-500" />
+                                      Is this vehicle financed or leased?
+                                  </label>
+                                  
+                                  {vehicle.lien && (
+                                      <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                          <div className="relative">
+                                              <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Lienholder Name (Search)</label>
+                                              <div className="relative">
+                                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                                  <input 
+                                                      value={vehicle.lienholderName || ''} 
+                                                      onChange={e => {
+                                                          updateVehicle(vehicle.id, 'lienholderName', e.target.value);
+                                                          if (e.target.value.length > 2) handleLienholderSearch(vehicle.id, e.target.value);
+                                                      }}
+                                                      className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-white text-sm outline-none focus:border-blue-500" 
+                                                      placeholder="Start typing bank name..."
+                                                  />
+                                                  {searchingLienholderId === vehicle.id && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-500" />}
+                                              </div>
+                                          </div>
+                                          
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                              <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">Address</label><input value={vehicle.lienholderAddress || ''} onChange={e => updateVehicle(vehicle.id, 'lienholderAddress', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-sm" /></div>
+                                              <div className="grid grid-cols-3 gap-2">
+                                                  <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">City</label><input value={vehicle.lienholderCity || ''} onChange={e => updateVehicle(vehicle.id, 'lienholderCity', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-sm" /></div>
+                                                  <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">State</label><input value={vehicle.lienholderState || ''} onChange={e => updateVehicle(vehicle.id, 'lienholderState', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-sm" /></div>
+                                                  <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">Zip</label><input value={vehicle.lienholderZip || ''} onChange={e => updateVehicle(vehicle.id, 'lienholderZip', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-sm" /></div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  )}
+                              </div>
+                              </div>
                           </div>
                       )}
                   </div>
@@ -884,13 +1234,321 @@ const QuoteForm: React.FC = () => {
   if (step === 'COVERAGE' && leadData.type === 'Personal') {
       return (
           <div className="max-w-4xl mx-auto py-12 animate-in fade-in">
-              {/* Reuse the existing coverage UI code here, simply adding the Next button that goes to SUMMARY */}
-              <div className="glass-card p-8 rounded-[3rem] border border-white/10 space-y-4">
-                  {/* ... Sliders ... */}
-                  <button onClick={() => setStep('SUMMARY')} className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95">Get Final Quotes <ChevronRight className="w-5 h-5" /></button>
+              <div className="glass-card p-8 md:p-12 rounded-[3rem] border border-white/10 space-y-8">
+                  <div className="text-center space-y-4">
+                     <h2 className="text-4xl font-heading font-bold text-white">Coverage Selection</h2>
+                     <p className="text-slate-400 max-w-md mx-auto">
+                       Customize your policy limits and vehicle-specific coverages.
+                     </p>
+                  </div>
+
+                  <div className="space-y-6">
+                     <h3 className="text-lg font-bold text-white uppercase tracking-widest border-b border-white/10 pb-4">Policy Level Coverages</h3>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className="text-xs font-bold text-slate-500 uppercase">Bodily Injury Liability</label>
+                           <select 
+                              value={formData.policyCoverage?.autoLimits || '100/300'} 
+                              onChange={e => setFormData({...formData, policyCoverage: {...formData.policyCoverage, autoLimits: e.target.value} as any})}
+                              className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+                           >
+                              <option value="25/50">State Minimum (25/50)</option>
+                              <option value="50/100">50/100</option>
+                              <option value="100/300">100/300 (Recommended)</option>
+                              <option value="250/500">250/500</option>
+                           </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                           <label className="text-xs font-bold text-slate-500 uppercase">Medical Payments</label>
+                           <select 
+                              value={formData.policyCoverage?.medicalPayments || '5000'} 
+                              onChange={e => setFormData({...formData, policyCoverage: {...formData.policyCoverage, medicalPayments: e.target.value} as any})}
+                              className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+                           >
+                              <option value="0">None</option>
+                              <option value="1000">$1,000</option>
+                              <option value="5000">$5,000</option>
+                              <option value="10000">$10,000</option>
+                           </select>
+                        </div>
+
+                        <div className="col-span-full flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/10">
+                           <div>
+                              <div className="text-sm font-bold text-white">Uninsured Motorist Coverage</div>
+                              <div className="text-xs text-slate-400">Matches Bodily Injury Limits</div>
+                           </div>
+                           <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                 type="checkbox" 
+                                 checked={formData.policyCoverage?.uninsuredMotorist !== false} 
+                                 onChange={e => setFormData({...formData, policyCoverage: {...formData.policyCoverage, uninsuredMotorist: e.target.checked} as any})}
+                                 className="sr-only peer" 
+                              />
+                              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                           </label>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-6 pt-6 border-t border-white/10">
+                     <h3 className="text-lg font-bold text-white uppercase tracking-widest border-b border-white/10 pb-4">Vehicle Coverages</h3>
+                     
+                     {formData.vehicles.map(vehicle => (
+                        <div key={vehicle.id} className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 space-y-4">
+                           <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-white text-lg">{vehicle.year} {vehicle.make} {vehicle.model}</h4>
+                              {vehicle.lien && <span className="text-xs font-bold px-2 py-1 bg-amber-500/10 text-amber-400 rounded uppercase tracking-widest">Financed/Leased</span>}
+                           </div>
+                           
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                 <label className="text-xs font-bold text-slate-500 uppercase">Comprehensive Deductible</label>
+                                 <select 
+                                    value={vehicle.coverages?.comp || (vehicle.lien ? '500' : 'None')} 
+                                    onChange={e => {
+                                       const newCoverages = {...(vehicle.coverages || {}), comp: e.target.value};
+                                       updateVehicle(vehicle.id, 'coverages', newCoverages);
+                                    }}
+                                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+                                 >
+                                    {!vehicle.lien && <option value="None">No Coverage</option>}
+                                    <option value="250">$250</option>
+                                    <option value="500">$500</option>
+                                    <option value="1000">$1,000</option>
+                                 </select>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                 <label className="text-xs font-bold text-slate-500 uppercase">Collision Deductible</label>
+                                 <select 
+                                    value={vehicle.coverages?.coll || (vehicle.lien ? '500' : 'None')} 
+                                    onChange={e => {
+                                       const newCoverages = {...(vehicle.coverages || {}), coll: e.target.value};
+                                       updateVehicle(vehicle.id, 'coverages', newCoverages);
+                                    }}
+                                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+                                 >
+                                    {!vehicle.lien && <option value="None">No Coverage</option>}
+                                    <option value="250">$250</option>
+                                    <option value="500">$500</option>
+                                    <option value="1000">$1,000</option>
+                                 </select>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                 <label className="text-xs font-bold text-slate-500 uppercase">Rental Reimbursement</label>
+                                 <select 
+                                    value={vehicle.coverages?.rental || 'None'} 
+                                    onChange={e => {
+                                       const newCoverages = {...(vehicle.coverages || {}), rental: e.target.value};
+                                       updateVehicle(vehicle.id, 'coverages', newCoverages);
+                                    }}
+                                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+                                 >
+                                    <option value="None">None</option>
+                                    <option value="30/900">$30 / $900</option>
+                                    <option value="40/1200">$40 / $1200</option>
+                                    <option value="50/1500">$50 / $1500</option>
+                                 </select>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                 <label className="text-xs font-bold text-slate-500 uppercase">Roadside Assistance</label>
+                                 <select 
+                                    value={vehicle.coverages?.towing || 'None'} 
+                                    onChange={e => {
+                                       const newCoverages = {...(vehicle.coverages || {}), towing: e.target.value};
+                                       updateVehicle(vehicle.id, 'coverages', newCoverages);
+                                    }}
+                                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+                                 >
+                                    <option value="None">None</option>
+                                    <option value="Included">Included</option>
+                                 </select>
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+
+                  <button onClick={() => setStep('SUMMARY')} className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95 mt-8">Get Final Quotes <ChevronRight className="w-5 h-5" /></button>
               </div>
           </div>
       );
+  }
+
+  // --- COMMERCIAL STEPS ---
+  if (step === 'COMMERCIAL_RISK') {
+    return (
+      <div className="max-w-4xl mx-auto py-12 animate-in fade-in slide-in-from-right-8 duration-700">
+        <div className="glass-card p-10 md:p-14 rounded-[3rem] border border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] rounded-full pointer-events-none"></div>
+          
+          <div className="relative z-10 space-y-8">
+            <div className="text-center space-y-4">
+               <h2 className="text-4xl font-heading font-bold text-white">Business Details</h2>
+               <p className="text-slate-400 max-w-md mx-auto">
+                 Tell us about your business so we can match you with the right commercial carriers.
+               </p>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); setStep('COMMERCIAL_DETAILS'); }} className="space-y-6 max-w-2xl mx-auto">
+               <div className="space-y-4">
+                  <div className="space-y-1">
+                     <label className="text-xs text-slate-400 font-medium ml-1">Legal Business Name</label>
+                     <input required placeholder="Legal Business Name" value={leadData.commercialName} onChange={e => setLeadData({...leadData, commercialName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                  </div>
+                  
+                  <div className="space-y-1 relative">
+                     <label className="text-xs text-slate-400 font-medium ml-1">Industry / SIC Code</label>
+                     <input 
+                       required 
+                       placeholder="Search your industry (e.g., Plumbing, Retail)" 
+                       value={sicSearchTerm} 
+                       onChange={e => {
+                         setSicSearchTerm(e.target.value);
+                         if (e.target.value.length > 2) {
+                           const results = SIC_INDUSTRIES.filter(ind => 
+                             ind.name.toLowerCase().includes(e.target.value.toLowerCase()) || 
+                             ind.sicCode.includes(e.target.value)
+                           ).slice(0, 5);
+                           setSicResults(results);
+                         } else {
+                           setSicResults([]);
+                         }
+                       }} 
+                       className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" 
+                     />
+                     {sicResults.length > 0 && (
+                       <div className="absolute z-20 w-full mt-1 bg-slate-800 border border-white/10 rounded-xl shadow-xl overflow-hidden">
+                         {sicResults.map((result, idx) => (
+                           <div 
+                             key={idx} 
+                             className="px-4 py-3 hover:bg-white/5 cursor-pointer text-sm text-white flex justify-between items-center"
+                             onClick={() => {
+                               setSicSearchTerm(result.name);
+                               setCommercialData({...commercialData, sic: result.sicCode, description: result.name});
+                               setSicResults([]);
+                             }}
+                           >
+                             <span>{result.name}</span>
+                             <span className="text-xs text-slate-400 font-mono">SIC: {result.sicCode}</span>
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-1">
+                        <label className="text-xs text-slate-400 font-medium ml-1">Year Started</label>
+                        <input type="number" required placeholder="YYYY" value={commercialData.yearBizStarted} onChange={e => setCommercialData({...commercialData, yearBizStarted: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-xs text-slate-400 font-medium ml-1">Annual Sales ($)</label>
+                        <input type="number" required placeholder="e.g., 500000" value={commercialData.annualSales || ''} onChange={e => setCommercialData({...commercialData, annualSales: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-1">
+                        <label className="text-xs text-slate-400 font-medium ml-1">Full-Time Employees</label>
+                        <input type="number" required placeholder="0" value={commercialData.numberOfFullTimeEmployees || ''} onChange={e => setCommercialData({...commercialData, numberOfFullTimeEmployees: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-xs text-slate-400 font-medium ml-1">Total Payroll ($)</label>
+                        <input type="number" required placeholder="e.g., 150000" value={commercialData.totalPayroll || ''} onChange={e => setCommercialData({...commercialData, totalPayroll: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-colors" />
+                     </div>
+                  </div>
+               </div>
+
+               <button type="submit" className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)] transition-all flex items-center justify-center gap-3 active:scale-95">
+                 Continue to Coverage <ChevronRight className="w-5 h-5" />
+               </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'COMMERCIAL_DETAILS') {
+    return (
+      <div className="max-w-4xl mx-auto py-12 animate-in fade-in slide-in-from-right-8 duration-700">
+        <div className="glass-card p-10 md:p-14 rounded-[3rem] border border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] rounded-full pointer-events-none"></div>
+          
+          <div className="relative z-10 space-y-8">
+            <div className="text-center space-y-4">
+               <h2 className="text-4xl font-heading font-bold text-white">Coverage Needs</h2>
+               <p className="text-slate-400 max-w-md mx-auto">
+                 Select the types of insurance you need for your business.
+               </p>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); setStep('COMMERCIAL_SUMMARY'); }} className="space-y-6 max-w-2xl mx-auto">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { id: 'General Liability', label: 'General Liability', icon: Shield },
+                    { id: 'Workers Comp', label: 'Workers Compensation', icon: Users },
+                    { id: 'Commercial Auto', label: 'Commercial Auto', icon: Truck },
+                    { id: 'BOP', label: 'Business Owners Policy', icon: Building },
+                    { id: 'Cyber', label: 'Cyber Liability', icon: Zap },
+                    { id: 'Professional', label: 'Professional Liability (E&O)', icon: Briefcase }
+                  ].map(line => (
+                    <label key={line.id} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${formData.bundledLines.includes(line.id) ? 'bg-blue-500/10 border-blue-500/50 text-white' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}>
+                      <input 
+                        type="checkbox" 
+                        className="hidden"
+                        checked={formData.bundledLines.includes(line.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({...formData, bundledLines: [...formData.bundledLines, line.id]});
+                          } else {
+                            setFormData({...formData, bundledLines: formData.bundledLines.filter(l => l !== line.id)});
+                          }
+                        }}
+                      />
+                      <line.icon className={`w-5 h-5 ${formData.bundledLines.includes(line.id) ? 'text-blue-400' : ''}`} />
+                      <span className="font-bold text-sm">{line.label}</span>
+                    </label>
+                  ))}
+               </div>
+
+               <button type="submit" className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)] transition-all flex items-center justify-center gap-3 active:scale-95">
+                 Get Commercial Quotes <ChevronRight className="w-5 h-5" />
+               </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'COMMERCIAL_SUMMARY') {
+     return (
+        <div className="max-w-5xl mx-auto py-12 px-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+           <div className="space-y-12">
+              <div className="space-y-6">
+                 <h3 className="text-lg font-bold text-white uppercase tracking-widest border-b border-white/10 pb-4 flex items-center gap-2"><Briefcase className="w-5 h-5 text-blue-400" /> Commercial Quote Options</h3>
+                 <div className="glass-card p-8 md:p-12 rounded-[2.5rem] border border-white/10 bg-slate-900/50 text-center space-y-8">
+                    <div className="max-w-2xl mx-auto space-y-4">
+                       <h4 className="text-2xl font-bold text-white">Analyzing Appetite Guides...</h4>
+                       <p className="text-slate-400 text-sm leading-relaxed">We are matching your SIC code ({commercialData.sic}) and business profile with carriers like NEXT, Thimble, Coterie, and more.</p>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+                       <button onClick={handleFinalSubmission} disabled={isProcessing} className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 justify-center">
+                          {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} Submit to Agency & View Dashboard
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+     );
   }
 
   return <div>Loading...</div>;

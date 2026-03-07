@@ -4,7 +4,12 @@ import { dbService } from './dbService';
 import { AIAnalysisResult } from '../types';
 
 // Helper to get initialized AI client
-const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAi = () => {
+  if (!process.env.API_KEY) {
+    throw new Error("Gemini API Key is missing. Please configure it in your environment variables.");
+  }
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+};
 
 const INJECTED_SYSTEM_INSTRUCTION = `You are a professional insurance agent at ReduceMyInsurance.Net.
 Agency: ReduceMyInsurance.Net - Independent Insurance Agency

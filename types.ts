@@ -22,7 +22,11 @@ export interface Resident {
   exclusionReason?: string;
   maritalStatus?: string;
   occupation?: string;
+  sicCode?: string;
+  isStudent?: boolean;
   education?: string;
+  goodStudentDiscount?: boolean;
+  driverTrainingDiscount?: boolean;
   email?: string;
   phone?: string;
   hasViolations?: boolean;
@@ -36,7 +40,7 @@ export interface Vehicle {
   model: string;
   vin?: string;
   type: 'Car' | 'Motorcycle' | 'RV' | 'Boat' | 'Collector';
-  usage: 'pleasure' | 'commute' | 'business';
+  usage: 'pleasure' | 'commute' | 'business' | 'collector' | 'farm';
   lien: boolean;
   lienholderName?: string;
   lienholderAddress?: string;
@@ -46,6 +50,7 @@ export interface Vehicle {
   status: 'pending' | 'included' | 'ignored' | 'excluded';
   exclusionReason?: string;
   annualMileage?: number;
+  telematicsOptIn?: boolean;
   isRideshare?: boolean;
   rideshareType?: string; // e.g. Uber, Lyft, DoorDash
   rideshareFrequency?: 'Daily' | 'Weekly' | 'Occasional';
@@ -59,6 +64,8 @@ export interface Vehicle {
   rideshareusage?: string;
   recalls?: any[]; // Array of recall objects from NHTSA
   nhtsaValidated?: boolean;
+  active?: boolean;
+  deletionReason?: string;
   coverages?: {
     comp: string;
     coll: string;

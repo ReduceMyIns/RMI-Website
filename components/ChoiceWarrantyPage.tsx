@@ -1,4 +1,5 @@
 import React from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, Shield, Home, Wrench, CheckCircle, ArrowRight, ExternalLink, Zap, Droplets, Snowflake } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

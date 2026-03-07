@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import NowCertsIframe from './NowCertsIframe';
 import { SERVICE_CARRIERS, ServiceCarrier } from '../data/serviceCarriers';
+import SEOHead from './SEOHead';
 
 type RequestType = 'BILLING' | 'CLAIMS' | 'DOCS' | 'CHANGES' | 'CANCEL' | 'COI' | 'RESHOP';
 
@@ -213,6 +214,12 @@ const ServiceCenter: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEOHead 
+        title="Policy Service Center | Manage Your Insurance"
+        description="Access your insurance carrier's service portal, report claims, pay bills, or request policy changes through our centralized service center."
+        canonicalUrl="https://www.reducemyinsurance.net/service"
+        keywords={['insurance service', 'report claim', 'pay insurance bill', 'policy changes', 'certificate of insurance']}
+      />
       
       {/* Header */}
       <div className="text-center space-y-6 mb-12">

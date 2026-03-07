@@ -531,6 +531,7 @@ const AIToolsPage: React.FC<{ user?: any }> = ({ user }) => {
 
       {!activeTool ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <ToolCard title="Compliance Manager" desc="Track vendor COIs, set requirements, and manage risk." icon={Shield} color="bg-blue-500" onClick={() => navigate('/compliance')} />
           <ToolCard title="Vehicle Recall Checker" desc="Instant recall check using live NHTSA databases." icon={AlertOctagon} color="bg-red-500" onClick={() => initiateTool('safety')} />
           <ToolCard title="File TN Owner Report" desc="Mandatory filing for accidents involving injury, death, or >$400 gov property damage. Must be filed within 20 days." icon={FileSignature} color="bg-indigo-500" onClick={() => window.open('https://dl.safety.tn.gov/_/#2', '_blank')} />
           <ToolCard title="TN Crash Report Purchase" desc="Access the official Tennessee portal to purchase collision reports." icon={FileText} color="bg-slate-500" onClick={() => window.open('https://apps.tn.gov/purchasetncrash/crashreport.jsp', '_blank')} />

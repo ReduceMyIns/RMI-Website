@@ -1,5 +1,6 @@
 
 import React from 'react';
+import SEOHead from './SEOHead';
 import { Link } from 'react-router-dom';
 import { 
   Wind, CloudHail, ShieldCheck, DollarSign, ArrowLeft, 

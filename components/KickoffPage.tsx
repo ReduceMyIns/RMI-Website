@@ -1,11 +1,11 @@
 import React from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, CheckCircle, Shield, Star, CreditCard, TrendingUp, ArrowRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import SEOHead from './SEOHead';
 
 const KickoffPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <SEOHead 
         title="Build Credit Fast with Kickoff | Murfreesboro Financial Tools"
         description="The easiest way to build credit. No credit check, no interest, and no fees. Start building your credit score today for just $5/month with Kickoff."

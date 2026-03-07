@@ -16,7 +16,7 @@ export interface SICIndustry {
   category: string;
 }
 
-export const SIC_INDUSTRIES: SICIndustry[] = [
+const baseIndustries: SICIndustry[] = [
   { name: "Wheat Farming", sicCode: "0111", slug: "wheat-farming", category: "Agriculture" },
   { name: "Rice Farming", sicCode: "0112", slug: "rice-farming", category: "Agriculture" },
   { name: "Corn Farming", sicCode: "0115", slug: "corn-farming", category: "Agriculture" },
@@ -161,6 +161,10 @@ export const SIC_INDUSTRIES: SICIndustry[] = [
   { name: "Accounting Services", sicCode: "8721", slug: "accounting-services", category: "Professional" },
   { name: "Police Protection", sicCode: "9221", slug: "police-protection", category: "Government" },
   { name: "Fire Protection", sicCode: "9224", slug: "fire-protection", category: "Government" }
+];
+
+export const SIC_INDUSTRIES: SICIndustry[] = [
+  ...baseIndustries
 ];
 
 export const getSICIndustryBySlug = (slug: string) => SIC_INDUSTRIES.find(i => i.slug === slug);

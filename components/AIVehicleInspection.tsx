@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import SEOHead from './SEOHead';
 import { 
   Camera, Car, Search, FileText, CheckCircle2, AlertTriangle, AlertCircle, X, 
   ChevronRight, Loader2, ArrowLeft, Save, Edit3, MapPin, Scan, Trash2, Smartphone, Mail, User, Check, Plus, Download
@@ -435,7 +436,14 @@ const AIVehicleInspection: React.FC = () => {
 
   if (mode === 'INTAKE') {
     return (
-      <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <>
+        <SEOHead 
+          title="AI Vehicle Inspection Tool | Auto Insurance Photos"
+          description="Complete your vehicle inspection for insurance quickly with our AI tool. Upload photos of your car and get instant validation for your policy."
+          canonicalUrl="https://www.reducemyinsurance.net/ai-vehicle-inspection"
+          keywords={['ai vehicle inspection', 'auto insurance photos', 'car inspection tool', 'insurance photos']}
+        />
+        <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="glass-card rounded-[3rem] p-10 md:p-16 border-white/10 relative">
           {errorMessage && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm flex items-center gap-3">
@@ -540,6 +548,7 @@ const AIVehicleInspection: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -547,7 +556,14 @@ const AIVehicleInspection: React.FC = () => {
   const activeVehicle = vehicles.find(v => v.id === activeVehicleId) || vehicles[0];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in pb-24">
+    <>
+      <SEOHead 
+        title="AI Vehicle Inspection Tool | Auto Insurance Photos"
+        description="Complete your vehicle inspection for insurance quickly with our AI tool. Upload photos of your car and get instant validation for your policy."
+        canonicalUrl="https://www.reducemyinsurance.net/ai-vehicle-inspection"
+        keywords={['ai vehicle inspection', 'auto insurance photos', 'car inspection tool', 'insurance photos']}
+      />
+      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in pb-24">
        
        <div className="flex justify-between items-center">
             <button onClick={() => setMode('INTAKE')} className="text-sm font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-2 mb-6">
@@ -723,6 +739,7 @@ const AIVehicleInspection: React.FC = () => {
 
        <input type="file" ref={fileInputRef} accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
     </div>
+    </>
   );
 };
 

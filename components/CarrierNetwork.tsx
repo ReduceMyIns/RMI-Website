@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CARRIERS_DATA } from '../data/carriers';
+import SEOHead from './SEOHead';
 
 const CarrierCard: React.FC<{ name: string; logo: string; slug: string }> = ({ name, logo, slug }) => {
   const [imgError, setImgError] = useState(false);
@@ -34,6 +35,12 @@ const CarrierCard: React.FC<{ name: string; logo: string; slug: string }> = ({ n
 const CarrierNetwork: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      <SEOHead 
+        title="Our Carrier Network | 175+ Insurance Partners"
+        description="We partner with over 175 top-rated insurance carriers including Progressive, Travelers, and Safeco to find you the best coverage at the lowest price."
+        canonicalUrl="https://www.reducemyinsurance.net/carriers"
+        keywords={['insurance carriers', 'carrier network', 'Progressive', 'Travelers', 'Safeco', 'independent agency']}
+      />
       <div className="text-center max-w-3xl mx-auto space-y-6">
         <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full glass border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
           <Shield className="w-3 h-3" /> Carrier Network

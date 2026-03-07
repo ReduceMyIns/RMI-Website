@@ -85,7 +85,7 @@ export const CARRIERS_DATA: Carrier[] = [
     logo: "/Liberty Mutual.jpg",
     phone: "877-538-1920",
     serviceLevel: "Full Service",
-    loginUrl: "https://login-business.libertymutual.com/",
+    loginUrl: "https://www.mybusinessonline.libertymutual.com/",
     products: ["Worker's Compensation", "General Liability", "Business Owners", "Commercial Auto", "Commercial Inland Marine", "Commercial Package", "Commercial Property", "Commercial Umbrella"],
     billingAddress: "P.O Box 2839, New York, NY 10116-2839",
     email: "businessservice@libertymutual.com",

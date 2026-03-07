@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, Stethoscope, HeartPulse, ShieldCheck, CheckCircle2, Users, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -8,7 +9,7 @@ const HealthPage: React.FC = () => {
   const PIPEDRIVE_URL = "https://webforms.pipedrive.com/f/1FOlkAaSbp1v7b14AOReTY5vxVamElFwZ4gPVY5wxJ6HAWpZQac3RvRNt5FRleCVd";
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+        <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
       <SEOHead 
         title="Health Insurance & Medicare Solutions | Reduce My Insurance"
         description="Compare health insurance plans, Medicare supplements, and family coverage. Get expert guidance on ACA plans and private health options."

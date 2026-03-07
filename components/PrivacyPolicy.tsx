@@ -1,10 +1,17 @@
 
 import React from 'react';
 import { Shield } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const PrivacyPolicy: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      <SEOHead 
+        title="Privacy Policy & Terms of Service | Reduce My Insurance"
+        description="Read our privacy policy and terms of service. Learn how we protect your data and your rights when using our insurance services."
+        canonicalUrl="https://www.reducemyinsurance.net/privacy"
+        keywords={['privacy policy', 'terms of service', 'data protection', 'insurance agency privacy']}
+      />
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">Privacy Policy & Terms</h1>
         <p className="text-slate-400">Last Updated: {new Date().toLocaleDateString()}</p>

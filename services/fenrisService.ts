@@ -129,6 +129,16 @@ export const fenrisApi = {
       };
     });
 
-    return { residents, vehicles };
+    // Try to determine homeowner status from the raw response
+    let homeownerStatus = 'unknown';
+    if (result.homeowner === true || result.homeowner === 'Y' || result.homeownerStatus === 'Homeowner') {
+      homeownerStatus = 'Homeowner';
+    } else if (result.homeowner === false || result.homeowner === 'N' || result.homeownerStatus === 'Renter') {
+      homeownerStatus = 'Renter';
+    } else if (result.primary?.homeowner) {
+      homeownerStatus = result.primary.homeowner ? 'Homeowner' : 'Renter';
+    }
+
+    return { residents, vehicles, homeownerStatus };
   }
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, Shield, Wrench, Car, CheckCircle, ArrowRight, ExternalLink, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

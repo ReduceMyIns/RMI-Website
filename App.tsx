@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Shield, LayoutDashboard, FileText, HelpCircle, Menu, X, ArrowRight, Sparkles, User, Settings, Bell, LogOut, Mail, Network, Box, Lock, PenTool, Briefcase, Wrench } from 'lucide-react';
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -22,6 +22,7 @@ import AgentAcademy from './components/AgentAcademy';
 import SitemapPage from './components/SitemapPage';
 import AIToolsPage from './components/AIToolsPage';
 import AIHomeInspection from './components/AIHomeInspection';
+import AIVehicleInspection from './components/AIVehicleInspection';
 import IndustryLandingPage from './components/IndustryLandingPage';
 import IndustryIndex from './components/IndustryIndex';
 import AdminDashboard from './components/AdminDashboard';
@@ -58,6 +59,11 @@ import KickoffPage from './components/KickoffPage';
 import ArkayWarrantyPage from './components/ArkayWarrantyPage';
 import ChoiceWarrantyPage from './components/ChoiceWarrantyPage';
 import HomeSecurityPage from './components/HomeSecurityPage';
+import CommunicationCenter from './components/CommunicationCenter';
+
+import { ComplianceDashboard } from './components/compliance/ComplianceDashboard';
+import { VendorCOIUpload } from './components/compliance/VendorCOIUpload';
+import { VendorDirectory } from './components/compliance/VendorDirectory';
 
 const NavItem: React.FC<{ to: string, icon: any, label: string, active: boolean }> = ({ to, icon: Icon, label, active }) => (
   <Link 
@@ -235,6 +241,10 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           <Route path="/apply" element={<QuoteForm />} />
           <Route path="/tools" element={<ProtectedRoute user={user}><AIToolsPage /></ProtectedRoute>} />
           <Route path="/tools/inspection" element={<ProtectedRoute user={user}><AIHomeInspection /></ProtectedRoute>} />
+          <Route path="/tools/vehicle-inspection" element={<ProtectedRoute user={user}><AIVehicleInspection /></ProtectedRoute>} />
+          <Route path="/compliance" element={<ProtectedRoute user={user}><ComplianceDashboard /></ProtectedRoute>} />
+          <Route path="/compliance/vendors" element={<ProtectedRoute user={user}><VendorDirectory /></ProtectedRoute>} />
+          <Route path="/compliance/upload/:vendorId" element={<VendorCOIUpload />} />
           <Route path="/carriers" element={<CarrierNetwork />} />
           <Route path="/carrier/:slug" element={<CarrierPage />} />
           
@@ -287,6 +297,7 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           
           {/* Admin Dashboard Route */}
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/communications" element={<CommunicationCenter />} />
           
           <Route path="/knowledge" element={<KnowledgeBase />} />
           <Route path="/agent/academy" element={<AgentAcademy />} />
@@ -302,13 +313,28 @@ const App: React.FC = () => {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
 
   useEffect(() => {
+    // Check session storage for dev bypass user
+    const storedUser = sessionStorage.getItem('rmi_user');
+    if (storedUser) {
+        try {
+            setUser(JSON.parse(storedUser));
+        } catch (e) {
+            console.error("Failed to parse stored user", e);
+        }
+    }
+
     // Listen for Firebase Auth State Changes
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         const profile = await dbService.getUserProfile(authUser.uid);
         setUser({ ...profile, uid: authUser.uid, email: authUser.email });
+        // Clear session storage if real auth succeeds to avoid conflicts
+        sessionStorage.removeItem('rmi_user');
       } else {
-        setUser(null);
+        // Only clear user if not in dev bypass mode
+        if (!sessionStorage.getItem('rmi_user')) {
+            setUser(null);
+        }
       }
     });
 
@@ -331,6 +357,7 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await signOut(auth);
+    sessionStorage.removeItem('rmi_user');
     setUser(null);
   };
 

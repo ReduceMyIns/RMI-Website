@@ -5,6 +5,7 @@ import { Plus, Trash2, Edit3, Save, X, BookOpen, Search, Loader2, FileText, Uplo
 import { dbService } from '../services/dbService';
 import { generateArticleContent } from '../services/geminiService';
 import { KnowledgeArticle } from '../types';
+import SEOHead from './SEOHead';
 
 const AgentAcademy: React.FC = () => {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
@@ -137,6 +138,12 @@ const AgentAcademy: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-12 px-6 space-y-8 animate-in fade-in">
+      <SEOHead 
+        title="Agent Academy | Insurance Knowledge Base"
+        description="Access our internal knowledge base and training resources for insurance agents. Stay updated on the latest industry trends and agency procedures."
+        canonicalUrl="https://www.reducemyinsurance.net/agent/academy"
+        keywords={['insurance training', 'agent academy', 'knowledge base', 'insurance procedures']}
+      />
       
       {/* Navigation Back */}
       <Link to="/admin" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">

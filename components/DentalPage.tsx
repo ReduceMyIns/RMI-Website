@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, Eye, Smile, CheckCircle2, ShieldPlus, Sparkles, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

@@ -3,6 +3,7 @@ import React from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { CARRIERS_DATA } from '../data/carriers';
 import { ArrowLeft, Phone, Globe, Mail, MapPin, Smartphone, Shield, ExternalLink, ArrowRight, CheckCircle2 } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const CarrierPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -14,6 +15,12 @@ const CarrierPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <SEOHead 
+        title={`${carrier.name} Insurance | Coverage & Claims Info`}
+        description={`Learn about ${carrier.name} insurance products, contact support, and access claims information through ReduceMyInsurance.Net.`}
+        canonicalUrl={`https://www.reducemyinsurance.net/carrier/${carrier.slug}`}
+        keywords={[carrier.name, 'insurance coverage', 'claims info', 'carrier support']}
+      />
       <Link to="/carriers" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Network
       </Link>

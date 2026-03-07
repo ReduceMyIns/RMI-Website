@@ -4,6 +4,7 @@ import { Mail, Lock, User, Shield, Loader2, ArrowRight, Zap, Info, LogIn, MapPin
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '../services/firebase';
 import { dbService } from '../services/dbService';
+import { nowCertsApi } from '../services/nowCertsService';
 
 interface PortalAuthProps {
   onAuthenticated: (client: any) => void;
@@ -148,12 +149,75 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
         // Create initial profile in Firestore
         await dbService.saveUserProfile(userCredential.user.uid, newProfile);
         
+        try {
+          // Push to NowCerts
+          const nowCertsPayload = {
+            type: 'Personal',
+            firstName,
+            lastName,
+            email,
+            phone,
+            dob,
+            address: addressComponents.street || address,
+            city: addressComponents.city,
+            state: addressComponents.state,
+            zip: addressComponents.zip,
+            residents: [],
+            vehicles: [],
+            properties: [],
+            bundledLines: []
+          };
+          const ncResponse = await nowCertsApi.pushQuoteApplication(nowCertsPayload as any);
+          
+          if (ncResponse && ncResponse.prospectId) {
+            // Create a task to remind agency to process changes
+            await nowCertsApi.insertTask({
+              description: `New user profile created for ${firstName} ${lastName}. Please review and process any changes.`,
+              dueDate: new Date().toISOString(),
+              priority: "High",
+              status: "Not Started",
+              assignedTo: "Agency",
+              insuredId: ncResponse.prospectId
+            });
+          }
+        } catch (ncErr) {
+          console.error("NowCerts integration failed during registration:", ncErr);
+        }
+        
         // Use local data for immediate feedback (Optimistic Update)
         profile = newProfile;
       } else {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
         // Fetch profile data from DB for existing users
         profile = await dbService.getUserProfile(userCredential.user.uid);
+
+        // If no profile found, try to find existing lead by email to prefill
+        if (!profile) {
+            const existingLead = await dbService.findExistingLead(email, '');
+            if (existingLead) {
+                profile = existingLead;
+            } else {
+                // Try NowCerts as last resort
+                try {
+                    const ncResults = await nowCertsApi.searchInsured({ email });
+                    if (ncResults && ncResults.value && ncResults.value.length > 0) {
+                        const insured = ncResults.value[0];
+                        profile = {
+                            firstName: insured.firstName,
+                            lastName: insured.lastName,
+                            email: insured.eMail,
+                            phone: insured.cellPhone || insured.phone,
+                            address: insured.addressLine1,
+                            city: insured.city,
+                            state: insured.state,
+                            zip: insured.zipCode
+                        };
+                    }
+                } catch (e) {
+                    console.warn("NowCerts search failed", e);
+                }
+            }
+        }
       }
       
       const userData = {
@@ -183,6 +247,33 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDevBypass = async () => {
+      setIsLoading(true);
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const mockUid = "dev-bypass-" + Date.now();
+      const mockProfile = {
+          firstName: firstName || "Dev",
+          lastName: lastName || "User",
+          email: email || "dev@example.com",
+          phone: phone || "555-555-5555",
+          address: address || "123 Dev St",
+          city: addressComponents.city || "Dev City",
+          state: addressComponents.state || "TN",
+          zip: addressComponents.zip || "37129",
+          role: 'client',
+          uid: mockUid
+      };
+
+      // Persist to session storage
+      sessionStorage.setItem('rmi_user', JSON.stringify(mockProfile));
+      
+      // Trigger auth success
+      onAuthenticated(mockProfile);
+      setIsLoading(false);
   };
 
   return (
@@ -224,6 +315,7 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
             <div className="space-y-4 animate-in slide-in-from-right">
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
+                     <label className="text-xs text-slate-400 font-medium ml-1">First Name</label>
                      <input 
                        placeholder="First Name" 
                        value={firstName}
@@ -232,6 +324,7 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
                      />
                   </div>
                   <div className="space-y-1">
+                     <label className="text-xs text-slate-400 font-medium ml-1">Last Name</label>
                      <input 
                        placeholder="Last Name" 
                        value={lastName}
@@ -243,6 +336,7 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
 
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
+                     <label className="text-xs text-slate-400 font-medium ml-1">Date of Birth</label>
                      <input 
                        type="date"
                        placeholder="Date of Birth"
@@ -252,6 +346,7 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
                      />
                   </div>
                   <div className="space-y-1">
+                     <label className="text-xs text-slate-400 font-medium ml-1">Phone Number</label>
                      <input 
                        type="tel"
                        placeholder="Phone (###-###-####)" 
@@ -263,17 +358,20 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
                   </div>
                </div>
 
-               <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-400 transition-colors">
-                    <MapPin className="w-5 h-5" />
+               <div className="relative group space-y-1">
+                  <label className="text-xs text-slate-400 font-medium ml-1">Street Address</label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-400 transition-colors">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <input 
+                      ref={addressInputRef}
+                      placeholder="Street Address" 
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
+                    />
                   </div>
-                  <input 
-                    ref={addressInputRef}
-                    placeholder="Street Address" 
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 text-white text-sm"
-                  />
                </div>
 
                <div className="grid grid-cols-3 gap-4">
@@ -332,6 +430,15 @@ const PortalAuth: React.FC<PortalAuthProps> = ({ onAuthenticated, defaultIsRegis
           {error && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs text-center font-bold animate-in shake-in">
               {error}
+              {error.includes("Connection blocked") && (
+                  <button 
+                      type="button"
+                      onClick={handleDevBypass}
+                      className="block mx-auto mt-2 text-[10px] underline hover:text-red-300 cursor-pointer"
+                  >
+                      Bypass Auth (Dev Mode)
+                  </button>
+              )}
             </div>
           )}
 

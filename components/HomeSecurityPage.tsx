@@ -1,10 +1,11 @@
 import React from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, Shield, Lock, CheckCircle, ArrowRight, ExternalLink, Wifi, Wrench, FileText, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const HomeSecurityPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <SEOHead 
         title="Home Security Systems | ADT & Cove Smart Security"
         description="Secure your home with top-rated security systems. Compare professional installation from ADT with flexible DIY options from Cove Smart."

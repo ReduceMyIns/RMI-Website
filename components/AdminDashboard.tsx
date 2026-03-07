@@ -6,7 +6,7 @@ import { signOut, signInAnonymously } from "firebase/auth";
 import { 
   Shield, Users, FileText, Camera, Lock, Loader2, RefreshCw, 
   ChevronDown, Database, BookOpen, Download, AlertTriangle, Car, FileJson, Upload, Briefcase, LogOut,
-  Phone, Mail, MapPin, CheckCircle2
+  Phone, Mail, MapPin, CheckCircle2, Plus, MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -33,8 +33,18 @@ const AdminDashboard: React.FC = () => {
       setIsLoading(true);
       setError('');
       try {
-          // If not authenticated, we might not be able to read from Firestore depending on rules.
-          // We will try to fetch data anyway. If it fails, the catch block in fetchData will handle it.
+          // Sign in anonymously to satisfy "auth != null" rules
+          if (!auth.currentUser) {
+              try {
+                  await signInAnonymously(auth);
+              } catch (authErr: any) {
+                  if (authErr.code === 'auth/admin-restricted-operation' || authErr.message?.includes('admin-restricted-operation')) {
+                      console.warn("Admin Auth Restricted: Proceeding in restricted mode.");
+                  } else {
+                      throw authErr;
+                  }
+              }
+          }
           setIsAuthenticated(true);
           await fetchData('LEADS');
       } catch (err: any) {
@@ -57,6 +67,7 @@ const AdminDashboard: React.FC = () => {
 
   const fetchData = async (tab: AdminTab) => {
     setIsLoading(true);
+    setError(''); // Clear previous errors
     setActiveTab(tab);
     setSelectedItem(null);
     try {
@@ -70,11 +81,33 @@ const AdminDashboard: React.FC = () => {
       }
       setData(result);
     } catch (e: any) {
-      console.error(e);
-      setError('Failed to fetch data. Database rules may require authentication.');
+      console.error("Fetch Data Error:", e);
+      setError(`Failed to fetch data: ${e.message || 'Unknown Error'}. Check console for details.`);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGenerateTestLead = async () => {
+      setIsLoading(true);
+      try {
+          await dbService.saveQuoteRequest({
+              firstName: "Test",
+              lastName: `Lead ${new Date().toLocaleTimeString()}`,
+              email: "test@example.com",
+              phone: "555-0123",
+              type: "Personal",
+              status: "New",
+              notes: "Generated from Admin Console"
+          });
+          await fetchData('LEADS');
+          alert("Test lead generated successfully!");
+      } catch (e: any) {
+          console.error(e);
+          alert(`Failed to generate test lead: ${e.message}`);
+      } finally {
+          setIsLoading(false);
+      }
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -304,12 +337,25 @@ const AdminDashboard: React.FC = () => {
           >
             <BookOpen className="w-4 h-4" /> Academy
           </Link>
+          <Link 
+            to="/admin/communications"
+            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 text-slate-400 hover:text-blue-400 hover:bg-white/5"
+          >
+            <MessageSquare className="w-4 h-4" /> Comms
+          </Link>
           <button 
             onClick={handleSignOut}
             className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 text-slate-400 hover:text-red-400 hover:bg-white/5 ml-1"
             title="Log Out"
           >
             <LogOut className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={handleGenerateTestLead}
+            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 text-emerald-400 hover:text-emerald-300 hover:bg-white/5 ml-1"
+            title="Generate Test Lead"
+          >
+            <Plus className="w-4 h-4" /> Test
           </button>
         </div>
       </div>

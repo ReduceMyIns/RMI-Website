@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Plus, Shield, AlertCircle, X, Phone, Car, Home, ChevronRight, Loader2, Info, ChevronDown, CheckCircle2, TrendingDown, FileQuestion, Settings, Users, Umbrella, UserPlus, UserMinus, UserCog, MapPin, FileText, HelpCircle, MessageSquare, Brain, Upload, Download, File
+  Plus, Shield, AlertCircle, X, Phone, Car, Home, ChevronRight, Loader2, Info, ChevronDown, CheckCircle2, TrendingDown, FileQuestion, Settings, Users, Umbrella, UserPlus, UserMinus, UserCog, MapPin, FileText, HelpCircle, MessageSquare, Brain, Upload, Download, File, Briefcase, Ship
 } from 'lucide-react';
 import { nowCertsApi } from '../services/nowCertsService';
 import { getCarrierServiceLevel } from '../services/config';
@@ -12,6 +12,7 @@ import { generateDecPage, generateAutoIdCard } from '../services/pdfGenerator';
 import NowCertsIframe from './NowCertsIframe';
 import { AddVehicleModal } from './AddVehicleModal';
 import { AddDriverModal } from './AddDriverModal';
+import { ClientCommunicationHub } from './ClientCommunicationHub';
 
 // ... (Existing SERVICES array and helper functions remain same) ...
 const SERVICES = [
@@ -500,16 +501,18 @@ const ClientDashboard: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'ACTIVE' | 'QUOTES' | 'HISTORY'>('ACTIVE');
+  const [viewMode, setViewMode] = useState<'ACTIVE' | 'QUOTES' | 'HISTORY' | 'COMMUNICATIONS'>('ACTIVE');
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [serviceModalUrl, setServiceModalUrl] = useState<string | null>(null);
   
   // New: Active Proposal from Agent
   const [activeProposal, setActiveProposal] = useState<any>(null);
+  const [pendingApplications, setPendingApplications] = useState<any[]>([]);
   
   // Policy Upload State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showAddAssetModal, setShowAddAssetModal] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('rmi_user');
@@ -539,8 +542,12 @@ const ClientDashboard: React.FC = () => {
 
       // 2. Load Firestore Lead/Quote Status
       const lead = await dbService.findExistingLead(u.email || u.eMail, u.phone || u.cellPhone);
-      if (lead && (lead.proposalUrl || lead.status === 'Quoted')) {
-          setActiveProposal(lead);
+      if (lead) {
+          if (lead.proposalUrl || lead.status === 'Quoted') {
+              setActiveProposal(lead);
+          } else if (lead.status === 'Submitted' || lead.status === 'New') {
+              setPendingApplications([lead]);
+          }
       }
 
     } catch (e) {
@@ -648,6 +655,10 @@ const ClientDashboard: React.FC = () => {
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
             New Coverage
           </button>
+          <button onClick={() => setShowAddAssetModal(true)} className="group bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-3">
+             <Plus className="w-5 h-5" />
+             Add Asset
+          </button>
           <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="group bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-3">
              {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
              Compare Policy
@@ -655,6 +666,60 @@ const ClientDashboard: React.FC = () => {
           <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,image/*" onChange={handleExternalPolicyUpload} />
         </div>
       </div>
+
+      {/* ADD ASSET MODAL */}
+      {showAddAssetModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
+              <div className="bg-slate-900 border border-white/10 rounded-3xl p-8 max-w-md w-full relative">
+                  <button onClick={() => setShowAddAssetModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors">
+                      <X className="w-6 h-6" />
+                  </button>
+                  <h3 className="text-2xl font-bold text-white mb-2">Add New Asset</h3>
+                  <p className="text-slate-400 text-sm mb-6">Select the type of asset you want to add to your portfolio.</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                      <button onClick={() => { setShowAddAssetModal(false); navigate('/apply', { state: { prefillData: user, defaultType: 'Personal', defaultLine: 'Auto' } }); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex flex-col items-center gap-3 transition-all">
+                          <Car className="w-8 h-8 text-blue-400" />
+                          <span className="text-sm font-bold text-white">Vehicle</span>
+                      </button>
+                      <button onClick={() => { setShowAddAssetModal(false); navigate('/apply', { state: { prefillData: user, defaultType: 'Personal', defaultLine: 'Home' } }); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex flex-col items-center gap-3 transition-all">
+                          <Home className="w-8 h-8 text-emerald-400" />
+                          <span className="text-sm font-bold text-white">Property</span>
+                      </button>
+                      <button onClick={() => { setShowAddAssetModal(false); navigate('/apply', { state: { prefillData: user, defaultType: 'Commercial' } }); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex flex-col items-center gap-3 transition-all">
+                          <Briefcase className="w-8 h-8 text-indigo-400" />
+                          <span className="text-sm font-bold text-white">Business</span>
+                      </button>
+                      <button onClick={() => { setShowAddAssetModal(false); navigate('/apply', { state: { prefillData: user, defaultType: 'Personal', defaultLine: 'Boat' } }); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex flex-col items-center gap-3 transition-all">
+                          <Ship className="w-8 h-8 text-cyan-400" />
+                          <span className="text-sm font-bold text-white">Boat / RV</span>
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* PENDING APPLICATIONS */}
+      {pendingApplications.length > 0 && (
+          <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+              <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                      <FileText className="w-8 h-8" />
+                  </div>
+                  <div>
+                      <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-xl font-bold text-white">Application Received</h3>
+                          <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                              Status: {pendingApplications[0].status}
+                          </span>
+                      </div>
+                      <p className="text-emerald-200 text-sm">
+                          We have received your application for <span className="font-bold text-white">{pendingApplications[0].type} Insurance</span>. An agent is reviewing it now.
+                      </p>
+                  </div>
+              </div>
+          </div>
+      )}
 
       {/* ACTIVE AGENT PROPOSAL CARD */}
       {activeProposal && activeProposal.proposalUrl && (
@@ -736,7 +801,7 @@ const ClientDashboard: React.FC = () => {
 
       <div className="space-y-6">
          <div className="flex items-center gap-6 border-b border-white/10 pb-1">
-            {['ACTIVE', 'QUOTES', 'HISTORY'].map((mode) => (
+            {['ACTIVE', 'QUOTES', 'HISTORY', 'COMMUNICATIONS'].map((mode) => (
                 <button
                    key={mode}
                    onClick={() => setViewMode(mode as any)}
@@ -747,41 +812,48 @@ const ClientDashboard: React.FC = () => {
                    {mode === 'ACTIVE' && `Active (${activePolicies.length})`}
                    {mode === 'QUOTES' && `Quotes (${quotes.length})`}
                    {mode === 'HISTORY' && `History (${history.length})`}
+                   {mode === 'COMMUNICATIONS' && `Communications`}
                    {viewMode === mode && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400 rounded-full"></div>}
                 </button>
             ))}
          </div>
          
          <div className="space-y-4">
-            {getDisplayedList().map((policy) => (
-                <div key={policy.databaseId} className="glass-card p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all group">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-2xl font-bold text-slate-500 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
-                                {policy.lineOfBusinesses?.[0]?.lineOfBusinessName?.[0] || 'P'}
-                            </div>
-                            <div>
-                                <h3 className="font-heading font-bold text-white text-xl mb-1">{policy.lineOfBusinesses?.[0]?.lineOfBusinessName || 'Insurance Policy'}</h3>
-                                <div className="text-sm text-slate-400 font-medium mb-1">{policy.carrierName} • <span className="font-mono text-slate-500">{policy.number}</span></div>
-                                <div className="text-xs text-slate-500">Expires: {new Date(policy.expirationDate).toLocaleDateString()}</div>
+            {viewMode === 'COMMUNICATIONS' ? (
+                <ClientCommunicationHub user={user} />
+            ) : (
+                <>
+                    {getDisplayedList().map((policy) => (
+                        <div key={policy.databaseId} className="glass-card p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all group">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-2xl font-bold text-slate-500 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
+                                        {policy.lineOfBusinesses?.[0]?.lineOfBusinessName?.[0] || 'P'}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-heading font-bold text-white text-xl mb-1">{policy.lineOfBusinesses?.[0]?.lineOfBusinessName || 'Insurance Policy'}</h3>
+                                        <div className="text-sm text-slate-400 font-medium mb-1">{policy.carrierName} • <span className="font-mono text-slate-500">{policy.number}</span></div>
+                                        <div className="text-xs text-slate-500">Expires: {new Date(policy.expirationDate).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                     <div className="text-2xl font-bold text-white mb-1">${policy.totalPremium?.toFixed(2)}</div>
+                                     <button 
+                                        onClick={() => setSelectedPolicy(policy)}
+                                        className="mt-4 px-6 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 ml-auto"
+                                     >
+                                        Details <ChevronRight className="w-3 h-3" />
+                                     </button>
+                                </div>
                             </div>
                         </div>
-                        <div className="text-right">
-                             <div className="text-2xl font-bold text-white mb-1">${policy.totalPremium?.toFixed(2)}</div>
-                             <button 
-                                onClick={() => setSelectedPolicy(policy)}
-                                className="mt-4 px-6 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 ml-auto"
-                             >
-                                Details <ChevronRight className="w-3 h-3" />
-                             </button>
+                    ))}
+                    {getDisplayedList().length === 0 && (
+                        <div className="text-center py-20 glass-card rounded-[2rem] border border-dashed border-white/10 text-slate-500 italic">
+                            No insurance data found for this selection.
                         </div>
-                    </div>
-                </div>
-            ))}
-            {getDisplayedList().length === 0 && (
-                <div className="text-center py-20 glass-card rounded-[2rem] border border-dashed border-white/10 text-slate-500 italic">
-                    No insurance data found for this selection.
-                </div>
+                    )}
+                </>
             )}
          </div>
       </div>

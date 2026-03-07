@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import SEOHead from './SEOHead';
 import { ArrowLeft, Heart, Users, Clock, ShieldCheck, CheckCircle2, Anchor, Baby, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

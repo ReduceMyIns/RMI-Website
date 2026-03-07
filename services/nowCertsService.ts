@@ -1,8 +1,8 @@
 
-import { APP_CONFIG } from './config';
-import { LeadData, CommercialRatingData, QuoteRequest } from '../types';
+import { APP_CONFIG } from './config.ts';
+import type { LeadData, CommercialRatingData, QuoteRequest } from '../types.ts';
 
-const BASE_URL = APP_CONFIG.apis.nowCerts.baseUrl.replace(/\/$/, '');
+const BASE_URL = '/api/nowcerts';
 const AGENCY_ID = "7b9d101f-6a6c-40a6-b256-bfd8a901c277";
 
 export const nowCertsApi = {
@@ -10,22 +10,8 @@ export const nowCertsApi = {
    * Get Access Token for NowCerts API
    */
   async getAccessToken() {
-    try {
-      const response = await fetch(`${BASE_URL}/api/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain' 
-        },
-        body: 'grant_type=password&username=chase@reducemyinsurance.net&password=TempPassword!1&client_id=ngAuthApp'
-      });
-
-      if (!response.ok) throw new Error("Token Fetch Failed");
-      const data = await response.json();
-      return data.access_token;
-    } catch (e) {
-      console.error("NowCerts Auth Error", e);
-      throw e;
-    }
+    // The backend Express server now handles token rotation and injection securely.
+    return "proxy-handles-token";
   },
 
   /**
@@ -36,7 +22,8 @@ export const nowCertsApi = {
       // Mapping Data to NowCerts Schema
       // databaseId fields are omitted to ensure creation of new items
       const payload: any = {
-        agencyid: AGENCY_ID,
+        AgencyId: AGENCY_ID, // PascalCase required
+        Form_Name: "AI Quote Application", // Required field
         firstName: formData.firstName,
         middleName: "",
         lastName: formData.lastName,
@@ -57,12 +44,18 @@ export const nowCertsApi = {
         insuredContacts: formData.residents.map(r => ({
             firstName: r.firstName,
             lastName: r.lastName,
-            type: r.relationship === 'Self' ? 'Owner' : 'Contact',
+            type: r.relationship === 'Self' ? 'Insured' : (r.relationship || 'Contact'),
             birthday: r.dob ? new Date(r.dob).toISOString() : null,
             socialSecurityNumber: null, 
             isDriver: r.status === 'rated',
             dlNumber: r.licenseNumber,
-            dlStateName: r.licenseState
+            dlStateName: r.licenseState,
+            occupation: r.occupation,
+            maritalStatus: r.maritalStatus,
+            email: r.email,
+            phone: r.phone,
+            goodStudentDiscount: r.goodStudentDiscount,
+            driverTrainingDiscount: r.driverTrainingDiscount
         })),
 
         // Vehicles Mapping
@@ -71,12 +64,28 @@ export const nowCertsApi = {
             make: v.make,
             model: v.model,
             vin: v.vin || "",
-            type_of_use: v.usage === 'commute' ? 2 : 1, // 2=Personal, 1=Commercial (Approximation)
-            active: v.status === 'included',
-            vehicleLienHolders: v.lien ? [{ natureOfInterest: 0 }] : [],
-            estimated_annual_distance: v.annualMileage?.toString() || "12000"
+            type_of_use: v.usage === 'business' ? 1 : 2, // 1=Commercial, 2=Personal
+            usageType: v.usage, // Pass raw usage string
+            active: v.active !== false,
+            deletionReason: v.active === false ? v.deletionReason : null,
+            vehicleLienHolders: v.lien ? [{ 
+                natureOfInterest: 1, // 1 = Lienholder
+                name: v.lienholderName,
+                addressLine1: v.lienholderAddress,
+                city: v.lienholderCity,
+                state: v.lienholderState,
+                zipCode: v.lienholderZip
+            }] : [],
+            estimated_annual_distance: v.annualMileage?.toString() || "12000",
+            telematicsOptIn: v.telematicsOptIn,
+            isRideshare: v.isRideshare,
+            rideshareType: v.rideshareType,
+            recalls: v.recalls // Pass NHTSA recalls
         })),
         
+        // Fenris Data
+        FenrisData: formData.fenrisData,
+
         // Quote / Policy placeholder
         policies: [
             {
@@ -165,14 +174,40 @@ export const nowCertsApi = {
 
   async updateInsured(data: any) {
     try {
-      const token = await this.getAccessToken();
-      const response = await fetch(`${BASE_URL}/api/Insured/Insert`, {
+      // Use PushJsonQuoteApplications for updates as well, matching by NCDatabaseId
+      // This endpoint handles both create and update based on ID match
+      const payload: any = {
+        AgencyId: AGENCY_ID,
+        Form_Name: "Portal Profile Update",
+        NCDatabaseId: data.databaseId || data.id, // Critical for update
+        firstName: data.firstName,
+        middleName: data.middleName,
+        lastName: data.lastName,
+        dateOfBirth: data.dob || data.dateOfBirth,
+        type: "Prospect", // Default type, system will update existing record regardless
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        state: data.state,
+        city: data.city,
+        zipCode: data.zipCode,
+        eMail: data.email,
+        phone: data.phone,
+        cellPhone: data.cellPhone,
+        smsPhone: data.smsPhone,
+        insuredType: data.insuredType
+      };
+
+      if (data.commercialName) payload.commercialName = data.commercialName;
+      if (data.dba) payload.dba = data.dba;
+      if (data.fein) payload.fein = data.fein;
+      if (data.website) payload.website = data.website;
+
+      const response = await fetch(`${BASE_URL}/api/PushJsonQuoteApplications`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+        headers: {
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -255,7 +290,55 @@ export const nowCertsApi = {
     }
   },
 
+  async searchCertificateHolders(query: string) {
+    try {
+      const token = await this.getAccessToken();
+      // Using the filter provided by the user: (contains(eMail, 'query') or contains(name, 'query') ...)
+      // We'll simplify to search name and email for now as a common use case
+      const filter = `$filter=(contains(name, '${query}') or contains(eMail, '${query}'))`;
+      const url = `${BASE_URL}/api/CertificateHolderList()?$count=true&$orderby=name asc&$skip=0&$top=5&${encodeURI(filter)}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      return await response.json();
+    } catch (err) {
+      console.warn("Certificate Holder Search Failed:", err);
+      return { value: [], '@odata.count': 0 };
+    }
+  },
+
+  async insertCertificateHolder(holderData: any) {
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${BASE_URL}/api/CertificateHolder/Insert`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(holderData)
+      });
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Insert Certificate Holder Failed: ${errorText}`);
+      }
+      return await response.json();
+    } catch (e) {
+      console.error("Insert Certificate Holder Error", e);
+      throw e;
+    }
+  },
+
   async getPolicies(user: any) {
+    // Check if user object has pre-loaded policies (e.g. from mock or previous fetch)
     if (user.policies && Array.isArray(user.policies) && user.policies.length > 0) {
       const mapped = user.policies.map((p: any) => ({
         ...p,
@@ -267,13 +350,22 @@ export const nowCertsApi = {
     try {
       const token = await this.getAccessToken();
       let filter = "";
-      const insuredId = user.id || user.insuredDatabaseId;
+      // Prioritize InsuredDatabaseId if available
+      const insuredId = user.id || user.insuredDatabaseId || user.databaseId;
 
       if (insuredId && insuredId !== "SIM-FORCE-01") {
+        // If we have a specific ID, filter by it
         filter = `$filter=InsuredDatabaseId eq '${insuredId}'`;
       } else {
+        // Fallback to email search if no specific ID
         const email = user.eMail || user.email || '';
-        filter = `$filter=contains(InsuredEmail, '${email}')`;
+        if (email) {
+            filter = `$filter=contains(InsuredEmail, '${email}')`;
+        } else {
+            // If no ID and no email, we can't fetch policies
+            console.warn("getPolicies: No valid user ID or email to fetch policies.");
+            return { value: [] };
+        }
       }
 
       const url = `${BASE_URL}/api/PolicyDetailList?${encodeURI(filter)}`;
@@ -287,6 +379,7 @@ export const nowCertsApi = {
       });
 
       if (!response.ok) {
+         console.warn(`getPolicies failed with status: ${response.status}`);
          return { value: [] };
       }
       return await response.json();

@@ -3,8 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { Mic, MicOff, Volume2, X, Sparkles, Loader2, Info } from 'lucide-react';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 function encode(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
@@ -49,6 +47,12 @@ export const LiveAssistant: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   const startSession = async () => {
     setIsConnecting(true);
     try {
+      if (!process.env.API_KEY) {
+        console.error("Gemini API Key is missing. Cannot start live session.");
+        setIsConnecting(false);
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });

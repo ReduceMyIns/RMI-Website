@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import SEOHead from './SEOHead';
 import { 
   Camera, Search, Home, CheckCircle2, AlertTriangle, X, Upload, 
   ChevronRight, Loader2, ClipboardCheck, ArrowLeft, Scan, Video, FileText, Download, PlayCircle, Save, Edit3, MapPin, AlertCircle
@@ -240,18 +241,33 @@ const AIHomeInspection: React.FC = () => {
 
   if (mode === 'LIVE') {
     return (
-      <LiveInspection 
-        requirements={requirements} 
-        onCapture={handleLiveCapture} 
-        onClose={() => setMode('INSPECTION')} 
-      />
+      <>
+        <SEOHead 
+          title="AI Home Inspection Tool | Instant Underwriting Photos"
+          description="Use our AI-powered tool to complete your home insurance inspection in minutes. Upload photos and get instant feedback for underwriting."
+          canonicalUrl="https://www.reducemyinsurance.net/ai-home-inspection"
+          keywords={['ai home inspection', 'underwriting photos', 'insurance inspection', 'home insurance tool']}
+        />
+        <LiveInspection 
+          requirements={requirements} 
+          onCapture={handleLiveCapture} 
+          onClose={() => setMode('INSPECTION')} 
+        />
+      </>
     );
   }
 
   // --- REPORT VIEW ---
   if (mode === 'REPORT') {
       return (
-          <div className="max-w-5xl mx-auto px-6 py-12 animate-in fade-in">
+          <>
+            <SEOHead 
+              title="AI Home Inspection Tool | Instant Underwriting Photos"
+              description="Use our AI-powered tool to complete your home insurance inspection in minutes. Upload photos and get instant feedback for underwriting."
+              canonicalUrl="https://www.reducemyinsurance.net/ai-home-inspection"
+              keywords={['ai home inspection', 'underwriting photos', 'insurance inspection', 'home insurance tool']}
+            />
+            <div className="max-w-5xl mx-auto px-6 py-12 animate-in fade-in">
               <div className="flex justify-between items-center mb-8">
                   <h2 className="text-3xl font-heading font-bold text-white">Final Report</h2>
                   <button onClick={() => setMode('INSPECTION')} className="text-sm text-slate-400 hover:text-white">Close</button>
@@ -299,13 +315,21 @@ const AIHomeInspection: React.FC = () => {
                   </div>
               </div>
           </div>
+          </>
       );
   }
 
   // --- INTAKE FORM (STEP 1) ---
   if (mode === 'INTAKE') {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <>
+        <SEOHead 
+          title="AI Home Inspection Tool | Instant Underwriting Photos"
+          description="Use our AI-powered tool to complete your home insurance inspection in minutes. Upload photos and get instant feedback for underwriting."
+          canonicalUrl="https://www.reducemyinsurance.net/ai-home-inspection"
+          keywords={['ai home inspection', 'underwriting photos', 'insurance inspection', 'home insurance tool']}
+        />
+        <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="glass-card rounded-[3rem] p-10 md:p-16 border-white/10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none"></div>
           
@@ -352,13 +376,21 @@ const AIHomeInspection: React.FC = () => {
           </form>
         </div>
       </div>
+      </>
     );
   }
 
   // --- REVIEW & EDIT (STEP 2) ---
   if (mode === 'REVIEW') {
      return (
-        <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in">
+        <>
+          <SEOHead 
+            title="AI Home Inspection Tool | Instant Underwriting Photos"
+            description="Use our AI-powered tool to complete your home insurance inspection in minutes. Upload photos and get instant feedback for underwriting."
+            canonicalUrl="https://www.reducemyinsurance.net/ai-home-inspection"
+            keywords={['ai home inspection', 'underwriting photos', 'insurance inspection', 'home insurance tool']}
+          />
+          <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in">
            <div className="glass-card rounded-[3rem] p-10 border-white/10 space-y-8">
               <div className="flex items-center justify-between">
                  <div>
@@ -415,12 +447,20 @@ const AIHomeInspection: React.FC = () => {
               </div>
            </div>
         </div>
+        </>
      );
   }
 
   // --- INSPECTION (STEP 3) ---
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8 animate-in fade-in">
+    <>
+      <SEOHead 
+        title="AI Home Inspection Tool | Instant Underwriting Photos"
+        description="Use our AI-powered tool to complete your home insurance inspection in minutes. Upload photos and get instant feedback for underwriting."
+        canonicalUrl="https://www.reducemyinsurance.net/ai-home-inspection"
+        keywords={['ai home inspection', 'underwriting photos', 'insurance inspection', 'home insurance tool']}
+      />
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8 animate-in fade-in">
       <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
         <div className="space-y-1">
           <button onClick={() => setMode('REVIEW')} className="text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest flex items-center gap-2 mb-2">
@@ -620,6 +660,7 @@ const AIHomeInspection: React.FC = () => {
 
       <input type="file" ref={fileInputRef} accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} />
     </div>
+    </>
   );
 };
 

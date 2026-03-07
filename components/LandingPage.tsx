@@ -1,13 +1,13 @@
 
 import React from 'react';
+import SEOHead from './SEOHead';
 import { ArrowRight, Sparkles, Shield, Zap, TrendingDown, Users, Play, Globe, CheckCircle2, Bot, Server, Box, Umbrella, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CarrierSlider from './CarrierSlider';
-import SEOHead from './SEOHead';
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="space-y-32 pb-32">
+        <div className="space-y-32 pb-32">
       <SEOHead 
         title="AI-Powered Insurance Comparison | ReduceMyInsurance.Net"
         description="Compare rates from 175+ carriers instantly with our AI-powered insurance engine. Save on Auto, Home, and Business insurance in Murfreesboro, TN."

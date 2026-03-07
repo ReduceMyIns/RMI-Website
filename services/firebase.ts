@@ -1,6 +1,6 @@
 // @ts-ignore
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, initializeAuth, browserLocalPersistence } from "firebase/auth";
+import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 // @ts-ignore
@@ -28,6 +28,17 @@ export const auth = getApps().length > 0
   : initializeAuth(app, {
       persistence: browserLocalPersistence,
     });
+
+// Ensure anonymous sign-in
+signInAnonymously(auth).catch((error) => {
+  // Ignore admin-restricted-operation as it likely means we are in a restricted environment
+  // and will fall back to mock data.
+  if (error.code === 'auth/admin-restricted-operation' || error.message.includes('admin-restricted-operation')) {
+    console.log("Running in restricted mode (anonymous auth disabled).");
+  } else {
+    console.warn("Anonymous sign-in failed:", error.message);
+  }
+});
 
 export const db = getFirestore(app);
 export const storage = getStorage(app);
