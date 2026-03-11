@@ -14,6 +14,7 @@ import ClientDashboard from './components/ClientDashboard';
 import KnowledgeBase from './components/KnowledgeBase';
 import CarrierNetwork from './components/CarrierNetwork';
 import CarrierPage from './components/CarrierPage';
+import OpenlyCarrierPage from './components/OpenlyCarrierPage';
 import ProductsPage from './components/ProductsPage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import FloatingChat from './components/FloatingChat';
@@ -246,6 +247,7 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
           <Route path="/compliance/vendors" element={<ProtectedRoute user={user}><VendorDirectory /></ProtectedRoute>} />
           <Route path="/compliance/upload/:vendorId" element={<VendorCOIUpload />} />
           <Route path="/carriers" element={<CarrierNetwork />} />
+          <Route path="/carrier/openly" element={<OpenlyCarrierPage />} />
           <Route path="/carrier/:slug" element={<CarrierPage />} />
           
           {/* Dedicated Product Pages */}
