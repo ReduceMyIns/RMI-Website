@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy package files and install all dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source and build the frontend
 COPY . .
@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Copy package files and install production deps only
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy the Vite-built frontend from builder
 COPY --from=builder /app/dist ./dist
