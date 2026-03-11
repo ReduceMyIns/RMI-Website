@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import admin from "firebase-admin";
 import complianceRoutes from "./api/complianceRoutes.ts";
+import syncRoutes from "./nowcerts-sync/syncRoutes.ts";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +50,7 @@ async function startServer() {
   });
 
   app.use('/api/compliance', complianceRoutes);
+  app.use('/api/sync', syncRoutes);
 
   // --- Firebase Admin DB Routes ---
   app.get('/api/db/leads', async (req, res) => {

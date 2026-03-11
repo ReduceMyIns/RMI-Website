@@ -349,13 +349,18 @@ export const nowCertsApi = {
   },
 
   async getPolicies(user: any) {
+    // Normalize raw NowCerts policy objects so the UI always gets lineOfBusinesses[]
+    const normalizePolicies = (policies: any[]) => policies.map((p: any) => ({
+      ...p,
+      lineOfBusinesses: p.lineOfBusinesses?.length
+        ? p.lineOfBusinesses
+        : p.linesOfBusiness?.map((l: string) => ({ lineOfBusinessName: l }))
+          ?? (p.lineOfBusiness ? [{ lineOfBusinessName: p.lineOfBusiness }] : [])
+    }));
+
     // Check if user object has pre-loaded policies (e.g. from mock or previous fetch)
     if (user.policies && Array.isArray(user.policies) && user.policies.length > 0) {
-      const mapped = user.policies.map((p: any) => ({
-        ...p,
-        lineOfBusinesses: p.linesOfBusiness?.map((l: string) => ({ lineOfBusinessName: l })) || []
-      }));
-      return { value: mapped };
+      return { value: normalizePolicies(user.policies) };
     }
 
     try {
@@ -373,13 +378,13 @@ export const nowCertsApi = {
               // Try to find policies for all matching insureds
               let allPolicies: any[] = [];
               for (const insured of searchResult.value) {
-                  const id = insured.id || insured.databaseId;
+                  const id = insured.databaseId || insured.id;
                   if (!id) continue;
                   const query = `$filter=insuredDatabaseId eq ${id}&$top=100&$skip=0&$orderby=effectiveDate desc`;
                   const url = `${BASE_URL}${endpoint}?${encodeURI(query)}`;
                   const response = await fetch(url, {
                     method: 'GET',
-                    headers: { 
+                    headers: {
                       'Accept': 'application/json',
                       'Authorization': `Bearer ${token}`
                     },
@@ -392,10 +397,9 @@ export const nowCertsApi = {
                       }
                   }
               }
-              
-              // If we found policies, return them. If not, maybe fall back to insuredId if we have one.
+
               if (allPolicies.length > 0) {
-                  return { value: allPolicies };
+                  return { value: normalizePolicies(allPolicies) };
               }
           }
       }
@@ -411,7 +415,7 @@ export const nowCertsApi = {
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: { 
+        headers: {
           'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -423,7 +427,8 @@ export const nowCertsApi = {
          console.warn(`getPolicies failed with status: ${response.status}, text: ${errText}`);
          return { value: [] };
       }
-      return await response.json();
+      const data = await response.json();
+      return { value: normalizePolicies(data.value ?? []) };
     } catch (e: any) {
       console.error("Policy Fetch Error", e);
       return { value: [], error: e.message || "Unknown error" };

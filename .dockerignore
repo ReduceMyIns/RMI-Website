@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+*.log
+.git
+.gitignore
+.dockerignore
+Carrier Logos
+*.md
+scripts
+public/sitemap.xml
