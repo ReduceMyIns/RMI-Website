@@ -8,22 +8,28 @@ import {
 } from 'lucide-react';
 import SEOHead from './SEOHead';
 
-// ─── Openly chat widget loader ────────────────────────────────────────────────
-// TODO: Replace the script src and the openChat() body below with the actual
-//       widget code from view-source:https://openly.com/contact-us
+// ─── Openly Zendesk chat widget ───────────────────────────────────────────────
+const ZENDESK_SCRIPT_ID = 'openly-ze-snippet';
+const ZENDESK_KEY = 'a71d0788-5615-49b5-83f7-69387bb904ef';
+
 function loadOpenlyChat() {
-  // Example for Intercom — swap out with whatever script Openly uses:
-  // const s = document.createElement('script');
-  // s.src = 'https://widget.intercom.io/widget/OPENLY_APP_ID';
-  // s.async = true;
-  // document.body.appendChild(s);
+  if (document.getElementById(ZENDESK_SCRIPT_ID)) return; // already loaded
+  const s = document.createElement('script');
+  s.id = ZENDESK_SCRIPT_ID;
+  s.src = `https://static.zdassets.com/ekr/snippet.js?key=${ZENDESK_KEY}`;
+  s.async = true;
+  document.body.appendChild(s);
 }
 
 function openOpenlyChat() {
-  // Call the widget's open method here, e.g.:
-  //   (window as any).Intercom?.('show');
-  //   (window as any).drift?.api?.startInteraction({ interactionId: 12345 });
-  console.warn('Openly chat widget not yet configured — paste widget code here.');
+  const zE = (window as any).zE;
+  if (zE) {
+    // Try both the classic Web Widget and the newer Messaging API
+    try { zE('messenger', 'open'); } catch { zE('webWidget', 'open'); }
+  } else {
+    // Widget not loaded yet — open Openly's contact page as fallback
+    window.open('https://openly.com/contact-us', '_blank', 'noopener');
+  }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
