@@ -3,47 +3,94 @@ import {
   MessageSquare, Mail, Phone, MessageCircle, Calendar, 
   User, FileText, Search, Plus, Send, Bot, Clock, 
   CheckCircle2, AlertCircle, RefreshCw, Paperclip, 
-  MoreVertical, Shield, Briefcase, Lock, Network, Folder, Download, Upload
+  MoreVertical, Shield, Briefcase, Lock, Network, Folder, Download, Upload, Tag, Filter, Play, Loader2
 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { communicationService, Message, Thread } from '../services/communicationService';
-import { dbService } from '../services/dbService';
+import { nowCertsApi } from '../services/nowCertsService';
 
 type Channel = 'PORTAL' | 'EMAIL' | 'SMS' | 'VOICE' | 'INTERNAL';
-type TaskType = 'SERVICE' | 'MANAGEMENT';
 
-interface Task {
+interface Ticket {
   id: string;
-  title: string;
-  assignee: string;
-  calendar: string;
-  date: Date;
-  status: 'PENDING' | 'COMPLETED';
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  subject: string;
+  snippet: string;
+  updatedAt: string;
+  channel: Channel;
+  status: 'NEW' | 'OPEN' | 'PENDING' | 'RESOLVED';
+  labels: string[];
+  policyNumber?: string;
+  carrier?: string;
+  actionItems: string[];
+  aiTasks: string[];
+  messages: Message[];
+  nowCertsProfileId?: string;
 }
 
 export default function CommunicationCenter() {
-  const [threads, setThreads] = useState<Thread[]>([]);
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [inputMessage, setInputMessage] = useState('');
-  const [selectedChannel, setSelectedChannel] = useState<Channel>('PORTAL');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<Channel>('EMAIL');
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [driveFiles, setDriveFiles] = useState<{name: string, url: string}[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterLabel, setFilterLabel] = useState<string | null>(null);
   const [isGmailConnected, setIsGmailConnected] = useState(false);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Reply fields
+  const [replyTo, setReplyTo] = useState('');
+  const [replyCc, setReplyCc] = useState('');
+  const [replyBcc, setReplyBcc] = useState('');
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
 
-  const activeThread = threads.find(t => t.id === activeThreadId);
+  // Manual NowCerts Search
+  const [ncSearchQuery, setNcSearchQuery] = useState('');
+  const [ncSearchResults, setNcSearchResults] = useState<any[]>([]);
+  const [isSearchingNC, setIsSearchingNC] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const ticketsRef = useRef<Ticket[]>([]);
+  const activeTicketIdRef = useRef<string | null>(null);
+  const isSyncingRef = useRef(false);
+
+  const activeTicket = tickets.find(t => t.id === activeTicketId);
 
   useEffect(() => {
-    loadThreads();
+    ticketsRef.current = tickets;
+  }, [tickets]);
+
+  useEffect(() => {
+    activeTicketIdRef.current = activeTicketId;
+  }, [activeTicketId]);
+
+  useEffect(() => {
+    if (activeTicket) {
+      setReplyTo(activeTicket.clientEmail || '');
+      setReplyCc('');
+      setReplyBcc('');
+    }
+  }, [activeTicketId]);
+
+  useEffect(() => {
     checkGmailConnection();
+    
+    const unsubscribe = communicationService.subscribeToTickets((fetchedTickets) => {
+      setTickets(fetchedTickets);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (activeTicketId) {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+  }, [activeTicketId, activeTicket?.messages]);
 
   const checkGmailConnection = async () => {
     const connected = await communicationService.checkGmailStatus();
@@ -84,316 +131,359 @@ export default function CommunicationCenter() {
     }
   };
 
-  useEffect(() => {
-    if (activeThreadId) {
-      const thread = threads.find(t => t.id === activeThreadId);
-      if (thread && thread.id.length > 16) { // Heuristic: Gmail IDs are long hex strings, DB IDs are usually UUIDs or shorter
-         // It's likely a Gmail thread
-         loadGmailMessages(thread.id);
-      } else {
-         // It's a DB thread
-         const unsubscribe = communicationService.subscribeToMessages(activeThreadId, (msgs) => {
-           setMessages(msgs);
-           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-         });
-         return () => unsubscribe();
-      }
-    }
-  }, [activeThreadId]);
-
-  const loadGmailMessages = async (threadId: string) => {
-    try {
-      // Fetch full thread details from Gmail
-      // We need a new service method for getGmailThreadDetails because getGmailMessage gets a single message
-      // But for now, let's assume we fetch the latest message content or list messages in thread
-      // Actually, the Gmail API 'threads.get' returns all messages in the thread.
-      // Let's update communicationService to support this better, but for now we can reuse getGmailMessage if it was actually fetching thread details?
-      // Wait, getGmailMessage fetches 'users.messages.get'. We need 'users.threads.get'.
-      
-      // Let's implement a quick fetch here or update service.
-      // Updating service is cleaner.
-      const threadDetails = await communicationService.getGmailThread(threadId);
-      
-      if (threadDetails && threadDetails.messages) {
-        const mappedMessages: Message[] = threadDetails.messages.map((m: any) => {
-           const headers = m.payload.headers;
-           const from = headers.find((h: any) => h.name === 'From')?.value || '';
-           const isMe = from.includes('service@reducemyinsurance.net') || from.includes('me'); // Simplified check
-           
-           return {
-             id: m.id,
-             threadId: threadId,
-             senderId: isMe ? 'agent' : 'client',
-             senderName: from.split('<')[0].trim(),
-             senderRole: isMe ? 'AGENT' : 'CLIENT',
-             content: m.snippet, // Full body parsing is complex (multipart), using snippet for now
-             timestamp: new Date(parseInt(m.internalDate)).toISOString(),
-             channel: 'EMAIL'
-           };
-        });
-        setMessages(mappedMessages);
-      }
-    } catch (e) {
-      console.error("Failed to load Gmail messages", e);
-    }
-  };
-
-  useEffect(() => {
-    if (activeThread) {
-      loadDriveFiles(activeThread.commercialName || activeThread.clientName);
-    }
-  }, [activeThread]);
-
-  const loadThreads = async () => {
-    setIsLoading(true);
-    try {
-      // 1. Fetch DB Threads
-      const dbThreads = await communicationService.getAllThreads();
-      
-      // 2. Fetch Gmail Threads (if connected)
-      let gmailThreads: Thread[] = [];
-      if (isGmailConnected) {
-        try {
-          const gThreads = await communicationService.getGmailThreads();
-          // Map Gmail threads to our Thread interface
-          gmailThreads = await Promise.all(gThreads.map(async (gt: any) => {
-            // Fetch full message to get details
-            const details = await communicationService.getGmailMessage(gt.id);
-            const headers = details.payload.headers;
-            const subject = headers.find((h: any) => h.name === 'Subject')?.value || '(No Subject)';
-            const from = headers.find((h: any) => h.name === 'From')?.value || '';
-            const date = headers.find((h: any) => h.name === 'Date')?.value;
-            
-            // Extract name/email from "From" header
-            const nameMatch = from.match(/^"?([^"<]+)"?\s*<(.+)>$/);
-            const clientName = nameMatch ? nameMatch[1].trim() : from;
-            const clientId = nameMatch ? nameMatch[2].trim() : from; // Use email as ID
-
-            return {
-              id: gt.id,
-              clientId: clientId,
-              clientName: clientName,
-              commercialName: '', // Gmail threads don't have this context initially
-              lastMessage: `📧 ${subject} - ${details.snippet}`,
-              updatedAt: date ? new Date(date).toISOString() : new Date().toISOString(),
-              unreadCount: 0 // Could calculate from labels 'UNREAD'
-            };
-          }));
-        } catch (e) {
-          console.error("Failed to load Gmail threads", e);
-        }
-      }
-
-      // 3. Merge and Sort
-      const allThreads = [...dbThreads, ...gmailThreads];
-      allThreads.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-      
-      setThreads(allThreads);
-      
-      if (allThreads.length > 0 && !activeThreadId) {
-        setActiveThreadId(allThreads[0].id);
-      }
-    } catch (e) {
-      console.error("Failed to load threads", e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadDriveFiles = async (folderName: string) => {
-    try {
-      const files = await communicationService.getDriveFiles(folderName);
-      setDriveFiles(files);
-    } catch (e) {
-      console.error("Failed to load drive files", e);
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !activeThreadId || !activeThread) return;
-
-    try {
-      // If sending via EMAIL, use Gmail API
-      if (selectedChannel === 'EMAIL') {
-        if (!isGmailConnected) {
-          alert("Please connect Gmail to send emails.");
-          return;
-        }
-
-        // Try to find client email
-        let clientEmail = '';
-        // Check if clientId looks like an email
-        if (activeThread.clientId.includes('@')) {
-          clientEmail = activeThread.clientId;
-        } else {
-          // Try to fetch lead/user details
-          try {
-            const leads = await dbService.getAllLeads();
-            const lead = leads.find((l: any) => l.id === activeThread.clientId);
-            if (lead && lead.email) {
-              clientEmail = lead.email;
-            } else {
-              // Fallback: Check users collection
-              const user = await dbService.getUserProfile(activeThread.clientId);
-              if (user && user.email) {
-                clientEmail = user.email;
-              }
-            }
-          } catch (e) {
-            console.warn("Failed to lookup client email", e);
-          }
-        }
-
-        if (!clientEmail) {
-          // Prompt for email if not found
-          const manualEmail = prompt("Client email not found. Please enter email address:");
-          if (!manualEmail) return;
-          clientEmail = manualEmail;
-        }
-
-        await communicationService.sendGmail(
-          clientEmail,
-          `Message from ReduceMyInsurance.Net regarding ${activeThread.commercialName || 'your policy'}`,
-          inputMessage
-        );
-      }
-
-      await communicationService.sendMessage(activeThreadId, {
-        threadId: activeThreadId,
-        senderId: 'agent',
-        senderName: 'Agent',
-        senderRole: selectedChannel === 'INTERNAL' ? 'SYSTEM' : 'AGENT',
-        content: inputMessage,
-        channel: selectedChannel
-      });
-      setInputMessage('');
-      loadThreads(); // Refresh threads to update lastMessage and updatedAt
-    } catch (e: any) {
-      console.error("Failed to send message", e);
-      alert(`Failed to send message: ${e.message}`);
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !activeThread) return;
-    
-    setIsUploading(true);
-    try {
-      const folderName = activeThread.commercialName || activeThread.clientName;
-      const url = await communicationService.uploadDriveFile(folderName, file);
-      
-      // Also send a message about the upload
-      await communicationService.sendMessage(activeThreadId!, {
-        threadId: activeThreadId!,
-        senderId: 'agent',
-        senderName: 'Agent',
-        senderRole: 'AGENT',
-        content: `Uploaded file to Google Drive: ${file.name}`,
-        channel: 'PORTAL'
-      });
-      
-      loadDriveFiles(folderName);
-      alert("File uploaded to Google Drive successfully!");
-    } catch (e) {
-      console.error("Upload failed", e);
-      alert("Failed to upload file.");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleGenerateAIResponse = async () => {
-    if (!activeThread) return;
-    setIsGenerating(true);
-    
+  const analyzeThreadWithAI = async (messagesText: string, subject: string, sender: string): Promise<any> => {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) throw new Error("Gemini API key not found");
 
       const ai = new GoogleGenAI({ apiKey });
       
-      const context = messages.map(m => `${m.senderRole} (${m.channel}): ${m.content}`).join('\n');
       const prompt = `
-        You are an AI assistant for ReduceMyInsurance.Net. 
-        Research the following conversation history and draft a contextual, helpful response to the client.
-        Consider past preferences, NowCerts data, and Google Drive files (simulated).
-        
-        Conversation History:
-        ${context}
-        
-        Draft a professional response:
+        Analyze the following email thread. Extract the following information:
+        1. Client Name
+        2. Policy Number (if mentioned)
+        3. Carrier (if mentioned)
+        4. A list of manual Action Items for the agent.
+        5. A list of AI Tasks that can be automated (e.g., "Draft a reply", "Update NowCerts profile", "Generate Dec Page").
+        6. A list of 1-3 labels (e.g., "Urgent", "Renewal", "Claim", "Question", "Endorsement").
+
+        Sender: ${sender}
+        Subject: ${subject}
+        Thread Content:
+        ${messagesText}
       `;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              clientName: { type: Type.STRING },
+              policyNumber: { type: Type.STRING },
+              carrier: { type: Type.STRING },
+              actionItems: { type: Type.ARRAY, items: { type: Type.STRING } },
+              aiTasks: { type: Type.ARRAY, items: { type: Type.STRING } },
+              labels: { type: Type.ARRAY, items: { type: Type.STRING } }
+            }
+          }
+        }
       });
 
-      setInputMessage(response.text || '');
-      setSelectedChannel('PORTAL'); // Default to portal for AI drafts
-    } catch (error) {
-      console.error("AI Generation Error:", error);
-      alert("Failed to generate AI response.");
-    } finally {
-      setIsGenerating(false);
+      return JSON.parse(response.text || '{}');
+    } catch (e) {
+      console.error("AI Analysis failed", e);
+      return {
+        clientName: sender,
+        actionItems: [],
+        aiTasks: [],
+        labels: ['Uncategorized']
+      };
     }
   };
 
-  const handleCreateTask = async (type: TaskType) => {
-    const title = prompt("Enter task description:");
-    if (!title) return;
+  const syncEmailsAndAnalyze = async () => {
+    if (!isGmailConnected || isSyncingRef.current) {
+      return;
+    }
 
-    const assignee = type === 'SERVICE' ? 'sherry@reducemyinsurance.net' : 'chenderson@reducemyinsurance.net';
+    isSyncingRef.current = true;
+    setIsSyncing(true);
+    try {
+      // Fetch threads from the last 30 days
+      const gThreads = await communicationService.getGmailThreads('newer_than:30d');
+      
+      const newTickets: Ticket[] = [];
+
+      // Process a subset to avoid rate limits/long waits in demo
+      const threadsToProcess = gThreads.slice(0, 100); 
+
+      for (const gt of threadsToProcess) {
+        // Skip if we already have this ticket in our local state (which is synced from Firestore)
+        if (ticketsRef.current.find(t => t.id === gt.id)) continue;
+
+        const details = await communicationService.getGmailMessage(gt.id);
+        if (!details) continue;
+
+        const headers = details.payload.headers;
+        const subject = headers.find((h: any) => h.name === 'Subject')?.value || '(No Subject)';
+        const from = headers.find((h: any) => h.name === 'From')?.value || '';
+        const date = headers.find((h: any) => h.name === 'Date')?.value;
+        
+        const nameMatch = from.match(/^"?([^"<]+)"?\s*<(.+)>$/);
+        const senderName = nameMatch ? nameMatch[1].trim() : from;
+        const senderEmail = nameMatch ? nameMatch[2].trim() : from;
+
+        // Extract body text (simplified for demo)
+        let bodyText = details.snippet;
+        let isHtml = false;
+        
+        const getPartData = (parts: any[], mimeType: string) => {
+            if (!parts) return null;
+            for (const part of parts) {
+                if (part.mimeType === mimeType && part.body && part.body.data) {
+                    return atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+                }
+                if (part.parts) {
+                    const nested = getPartData(part.parts, mimeType);
+                    if (nested) return nested;
+                }
+            }
+            return null;
+        };
+
+        const htmlData = getPartData(details.payload.parts, 'text/html');
+        const textData = getPartData(details.payload.parts, 'text/plain');
+
+        if (htmlData) {
+            bodyText = htmlData;
+            isHtml = true;
+        } else if (textData) {
+            bodyText = textData;
+        } else if (details.payload.body && details.payload.body.data) {
+            bodyText = atob(details.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+            isHtml = details.payload.mimeType === 'text/html';
+        }
+
+        // AI Analysis (use snippet or textData for AI to avoid HTML tags confusing it)
+        const textForAI = textData || details.snippet || bodyText.replace(/<[^>]*>?/gm, '');
+        const analysis = await analyzeThreadWithAI(textForAI, subject, senderName);
+
+        // Try to match with NowCerts
+        let ncProfileId = undefined;
+        try {
+            const searchResult = await nowCertsApi.searchInsured({ email: senderEmail });
+            if (searchResult && searchResult.value && searchResult.value.length > 0) {
+                ncProfileId = searchResult.value[0].databaseId || searchResult.value[0].id;
+            }
+        } catch (e) {
+            console.warn("NowCerts match failed", e);
+        }
+
+        const newTicket: Ticket = {
+          id: gt.id,
+          clientId: senderEmail,
+          clientName: analysis.clientName || senderName,
+          clientEmail: senderEmail,
+          subject: subject,
+          snippet: details.snippet,
+          updatedAt: date ? new Date(date).toISOString() : new Date().toISOString(),
+          channel: 'EMAIL',
+          status: 'NEW',
+          labels: analysis.labels || [],
+          policyNumber: analysis.policyNumber,
+          carrier: analysis.carrier,
+          actionItems: analysis.actionItems || [],
+          aiTasks: analysis.aiTasks || [],
+          nowCertsProfileId: ncProfileId,
+          messages: [{
+            id: details.id,
+            threadId: gt.id,
+            senderId: senderEmail,
+            senderName: senderName,
+            senderRole: 'CLIENT',
+            content: bodyText,
+            timestamp: date ? new Date(date).toISOString() : new Date().toISOString(),
+            channel: 'EMAIL',
+            isHtml: isHtml
+          }]
+        };
+
+        // Optimistic update for each new ticket
+        setTickets(prev => {
+          const updated = [newTicket, ...prev];
+          updated.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+          return updated;
+        });
+
+        await communicationService.saveTicket(newTicket);
+        newTickets.push(newTicket);
+      }
+
+      if (newTickets.length > 0 && !activeTicketIdRef.current) {
+        setActiveTicketId(newTickets[0].id);
+      }
+
+    } catch (e) {
+      console.error("Failed to sync emails", e);
+    } finally {
+      isSyncingRef.current = false;
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isGmailConnected) return;
     
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title,
-      assignee,
-      calendar: 'service@reducemyinsurance.net',
-      date: new Date(Date.now() + 86400000), // Tomorrow
-      status: 'PENDING'
+    // Initial sync
+    syncEmailsAndAnalyze();
+
+    // Schedule updates every 5 minutes
+    const interval = setInterval(() => {
+      syncEmailsAndAnalyze();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [isGmailConnected]);
+
+  const handleManualNCSearch = async () => {
+    if (!ncSearchQuery.trim()) return;
+    setIsSearchingNC(true);
+    try {
+      const res = await nowCertsApi.searchInsured({ email: ncSearchQuery, name: ncSearchQuery });
+      setNcSearchResults(res.value || []);
+    } catch (e) {
+      console.error("Manual NC Search failed", e);
+    } finally {
+      setIsSearchingNC(false);
+    }
+  };
+
+  const linkNcProfile = async (profileId: string) => {
+    if (!activeTicketId) return;
+    const ticketToUpdate = tickets.find(t => t.id === activeTicketId);
+    if (!ticketToUpdate) return;
+    
+    const updatedTicket = { ...ticketToUpdate, nowCertsProfileId: profileId };
+    
+    // Optimistic update
+    setTickets(prev => prev.map(t => t.id === activeTicketId ? updatedTicket : t));
+    
+    await communicationService.saveTicket(updatedTicket);
+    
+    setNcSearchResults([]);
+    setNcSearchQuery('');
+  };
+
+  const generateDraft = async () => {
+    if (!inputMessage.trim() || !activeTicket) return;
+    setIsGeneratingDraft(true);
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API key not found");
+      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `You are an insurance agent. The client sent this email:
+"${activeTicket.snippet}"
+
+Write a professional, polite, and helpful email reply based on this short instruction from the agent: "${inputMessage}"
+
+Return ONLY the email body text. Do not include the subject line or placeholder brackets unless necessary.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-pro-preview',
+        contents: prompt,
+      });
+
+      if (response.text) {
+        setInputMessage(response.text.trim());
+      }
+    } catch (e) {
+      console.error("Failed to generate draft", e);
+      alert("Failed to generate draft. Please try again.");
+    } finally {
+      setIsGeneratingDraft(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !activeTicketId || !activeTicket) return;
+
+    try {
+      if (selectedChannel === 'EMAIL') {
+        if (!isGmailConnected) {
+          alert("Please connect Gmail to send emails.");
+          return;
+        }
+
+        await communicationService.sendGmail(
+          replyTo || activeTicket.clientEmail,
+          `Re: ${activeTicket.subject}`,
+          inputMessage,
+          replyCc,
+          replyBcc
+        );
+      }
+
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        threadId: activeTicketId,
+        senderId: 'agent',
+        senderName: 'Agent',
+        senderRole: selectedChannel === 'INTERNAL' ? 'SYSTEM' : 'AGENT',
+        content: inputMessage,
+        timestamp: new Date().toISOString(),
+        channel: selectedChannel
+      };
+
+      const updatedTicket = {
+        ...activeTicket,
+        messages: [...activeTicket.messages, newMessage],
+        updatedAt: newMessage.timestamp,
+        status: 'OPEN' as const
+      };
+
+      // Optimistic update
+      setTickets(prev => prev.map(t => t.id === activeTicketId ? updatedTicket : t));
+
+      await communicationService.saveTicket(updatedTicket);
+      setInputMessage('');
+    } catch (e: any) {
+      console.error("Failed to send message", e);
+      alert(`Failed to send message: ${e.message}`);
+    }
+  };
+
+  const executeAITask = async (task: string) => {
+    if (!activeTicket) return;
+    
+    // Simulate AI task execution
+    const systemMsg: Message = {
+        id: Date.now().toString(),
+        threadId: activeTicket.id,
+        senderId: 'system',
+        senderName: 'AI Agent',
+        senderRole: 'SYSTEM',
+        content: `Executed AI Task: "${task}". Data synced to NowCerts.`,
+        timestamp: new Date().toISOString(),
+        channel: 'INTERNAL'
     };
 
-    setTasks([...tasks, newTask]);
-    
-    // Add system message to thread
-    if (activeThreadId) {
-      await communicationService.sendMessage(activeThreadId, {
-        threadId: activeThreadId,
-        senderId: 'system',
-        senderName: 'System',
-        senderRole: 'SYSTEM',
-        content: `Task Created: "${title}". Scheduled on Google Calendar for ${assignee} via service@reducemyinsurance.net.`,
-        channel: 'INTERNAL'
-      });
-    }
+    const updatedTicket = {
+        ...activeTicket,
+        messages: [...activeTicket.messages, systemMsg],
+        aiTasks: activeTicket.aiTasks.filter(t => t !== task)
+    };
+
+    // Optimistic update
+    setTickets(prev => prev.map(t => t.id === activeTicket.id ? updatedTicket : t));
+
+    await communicationService.saveTicket(updatedTicket);
   };
 
-  const getChannelIcon = (channel: Channel) => {
-    switch (channel) {
-      case 'PORTAL': return <MessageSquare className="w-4 h-4" />;
-      case 'EMAIL': return <Mail className="w-4 h-4" />;
-      case 'SMS': return <MessageCircle className="w-4 h-4" />;
-      case 'VOICE': return <Phone className="w-4 h-4" />;
-      case 'INTERNAL': return <Lock className="w-4 h-4" />;
-    }
-  };
+  const filteredTickets = tickets.filter(t => {
+    const matchesSearch = t.clientName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          t.subject.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLabel = filterLabel ? t.labels.includes(filterLabel) : true;
+    return matchesSearch && matchesLabel;
+  });
+
+  const allLabels = Array.from(new Set(tickets.flatMap(t => t.labels)));
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col pt-24 pb-8 px-4 lg:px-8">
-      <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col">
+      <div className="max-w-[1600px] w-full mx-auto flex-1 flex flex-col">
         
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <Network className="w-8 h-8 text-blue-400" />
-              Agency Hub: Communication Center
+              AI Automation Ticket System
             </h1>
-            <p className="text-slate-400 mt-1">Omnichannel client communications, AI research, and automated task scheduling.</p>
+            <p className="text-slate-400 mt-1">Omnichannel inbox, AI analysis, and NowCerts synchronization.</p>
           </div>
-          <div>
+          <div className="flex gap-3">
             {!isGmailConnected ? (
               <button 
                 onClick={handleConnectGmail}
@@ -406,90 +496,127 @@ export default function CommunicationCenter() {
                 <CheckCircle2 className="w-4 h-4" /> Gmail Connected
               </div>
             )}
+            <button 
+                onClick={syncEmailsAndAnalyze}
+                disabled={isSyncing || !isGmailConnected}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-xl transition-all font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50"
+            >
+                {isSyncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+                {isSyncing ? 'Syncing & Analyzing...' : 'Sync Last 30 Days'}
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[600px]">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[700px]">
           
-          {/* Left Sidebar: Threads */}
-          <div className="glass rounded-2xl border border-white/10 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-white/10 bg-white/5">
+          {/* Left Sidebar: Tickets List */}
+          <div className="lg:col-span-3 glass rounded-2xl border border-white/10 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-white/10 bg-white/5 space-y-3">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Search clients, policies..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search tickets..." 
                   className="w-full bg-slate-900 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:border-blue-500 outline-none"
                 />
               </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                <button 
+                    onClick={() => setFilterLabel(null)}
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-colors ${!filterLabel ? 'bg-blue-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                >
+                    All
+                </button>
+                {allLabels.map(label => (
+                    <button 
+                        key={label}
+                        onClick={() => setFilterLabel(label)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-colors ${filterLabel === label ? 'bg-blue-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                    >
+                        {label}
+                    </button>
+                ))}
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {threads.map(thread => (
-                <button
-                  key={thread.id}
-                  onClick={() => setActiveThreadId(thread.id)}
-                  className={`w-full text-left p-4 border-b border-white/5 transition-colors ${
-                    activeThreadId === thread.id ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : 'hover:bg-white/5'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-white">{thread.clientName}</span>
-                    <span className="text-[10px] text-slate-400">
-                      {new Date(thread.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <div className="text-xs text-blue-400 mb-2">{thread.commercialName || 'Personal'}</div>
-                  <p className="text-sm text-slate-400 truncate">{thread.lastMessage}</p>
-                </button>
-              ))}
+              {filteredTickets.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm">No tickets found. Click "Sync Last 30 Days" to pull emails.</div>
+              ) : (
+                  filteredTickets.map(ticket => (
+                    <button
+                      key={ticket.id}
+                      onClick={() => setActiveTicketId(ticket.id)}
+                      className={`w-full text-left p-4 border-b border-white/5 transition-colors ${
+                        activeTicketId === ticket.id ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-white truncate pr-2">{ticket.clientName}</span>
+                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                          {new Date(ticket.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="text-xs font-medium text-slate-300 mb-1 truncate">{ticket.subject}</div>
+                      <p className="text-[10px] text-slate-500 truncate mb-2">{ticket.snippet}</p>
+                      <div className="flex gap-1 flex-wrap">
+                          {ticket.labels.slice(0, 2).map(l => (
+                              <span key={l} className="px-1.5 py-0.5 bg-white/10 rounded text-[8px] font-bold text-slate-300 uppercase">{l}</span>
+                          ))}
+                          {ticket.labels.length > 2 && <span className="px-1.5 py-0.5 bg-white/10 rounded text-[8px] font-bold text-slate-300">+{ticket.labels.length - 2}</span>}
+                      </div>
+                    </button>
+                  ))
+              )}
             </div>
           </div>
 
           {/* Main Chat Area */}
-          <div className="lg:col-span-2 glass rounded-2xl border border-white/10 flex flex-col overflow-hidden">
-            {activeThread ? (
+          <div className="lg:col-span-6 glass rounded-2xl border border-white/10 flex flex-col overflow-hidden">
+            {activeTicket ? (
               <>
                 {/* Chat Header */}
                 <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-white">{activeThread.clientName}</h2>
+                    <h2 className="text-xl font-bold text-white">{activeTicket.subject}</h2>
                     <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
-                      <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {activeThread.commercialName || 'Personal'}</span>
-                      <button className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1">
-                        <RefreshCw className="w-3 h-3" /> Re-assign
-                      </button>
+                      <span className="flex items-center gap-1"><User className="w-4 h-4" /> {activeTicket.clientName} ({activeTicket.clientEmail})</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => handleCreateTask('SERVICE')} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-lg border border-white/10 transition-colors flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Service Task
-                    </button>
-                    <button onClick={() => handleCreateTask('MANAGEMENT')} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-lg border border-white/10 transition-colors flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Mgmt Task
-                    </button>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest border ${
+                        activeTicket.status === 'NEW' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                        activeTicket.status === 'OPEN' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                        'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    }`}>
+                        {activeTicket.status}
+                    </span>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map(msg => (
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-950/50">
+                  {activeTicket.messages.map(msg => (
                     <div key={msg.id} className={`flex flex-col ${msg.senderRole === 'AGENT' || msg.senderRole === 'SYSTEM' ? 'items-end' : 'items-start'}`}>
                       <div className="flex items-center gap-2 mb-1 px-1">
                         <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                          {getChannelIcon(msg.channel)} {msg.channel} • {msg.senderRole}
-                        </span>
-                        <span className="text-[10px] text-slate-500">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
+                          {msg.channel === 'EMAIL' ? <Mail className="w-3 h-3"/> : msg.channel === 'INTERNAL' ? <Lock className="w-3 h-3"/> : <MessageSquare className="w-3 h-3"/>} 
+                          {msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString()}
                         </span>
                       </div>
-                      <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                      <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-lg overflow-hidden ${
                         msg.senderRole === 'AGENT' 
                           ? msg.channel === 'INTERNAL' ? 'bg-amber-500/20 text-amber-100 border border-amber-500/30 rounded-tr-sm' : 'bg-blue-600 text-white rounded-tr-sm'
                           : msg.senderRole === 'SYSTEM'
                             ? 'bg-slate-800 text-slate-300 border border-white/10 rounded-tl-sm w-full text-center text-xs italic'
                             : 'bg-slate-800 text-slate-200 border border-white/10 rounded-tl-sm'
                       }`}>
-                        {msg.content}
+                        {msg.isHtml ? (
+                          <div dangerouslySetInnerHTML={{ __html: msg.content }} className="prose prose-invert max-w-none text-sm prose-p:my-1 prose-a:text-blue-400" />
+                        ) : (
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -497,42 +624,63 @@ export default function CommunicationCenter() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 border-t border-white/10 bg-slate-900/50">
-                  <div className="flex items-center gap-2 mb-3">
-                    {(['PORTAL', 'EMAIL', 'SMS', 'INTERNAL'] as Channel[]).map(ch => (
+                <div className="p-4 border-t border-white/10 bg-slate-900/80">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {(['EMAIL', 'INTERNAL'] as Channel[]).map(ch => (
+                        <button
+                          key={ch}
+                          onClick={() => setSelectedChannel(ch)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                            selectedChannel === ch 
+                              ? ch === 'INTERNAL' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-blue-500 text-white'
+                              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-white/5'
+                          }`}
+                        >
+                          {ch === 'EMAIL' ? <Mail className="w-3 h-3"/> : <Lock className="w-3 h-3"/>} {ch}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedChannel === 'EMAIL' && (
                       <button
-                        key={ch}
-                        onClick={() => setSelectedChannel(ch)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
-                          selectedChannel === ch 
-                            ? ch === 'INTERNAL' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-blue-500 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-white/5'
-                        }`}
+                        onClick={generateDraft}
+                        disabled={isGeneratingDraft || !inputMessage.trim()}
+                        className="px-3 py-1.5 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 disabled:opacity-50"
                       >
-                        {getChannelIcon(ch)} {ch}
+                        {isGeneratingDraft ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
+                        Expand with AI
                       </button>
-                    ))}
-                    <div className="flex-1" />
-                    <button 
-                      onClick={handleGenerateAIResponse}
-                      disabled={isGenerating}
-                      className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      {isGenerating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
-                      AI Research & Draft
-                    </button>
+                    )}
                   </div>
+
+                  {selectedChannel === 'EMAIL' && (
+                    <div className="mb-3 space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500 w-8 font-bold">To:</span>
+                        <input type="text" value={replyTo} onChange={e => setReplyTo(e.target.value)} className="flex-1 bg-transparent border-b border-white/10 focus:border-blue-500 outline-none text-slate-300 py-1" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500 w-8 font-bold">Cc:</span>
+                        <input type="text" value={replyCc} onChange={e => setReplyCc(e.target.value)} className="flex-1 bg-transparent border-b border-white/10 focus:border-blue-500 outline-none text-slate-300 py-1" placeholder="Optional" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500 w-8 font-bold">Bcc:</span>
+                        <input type="text" value={replyBcc} onChange={e => setReplyBcc(e.target.value)} className="flex-1 bg-transparent border-b border-white/10 focus:border-blue-500 outline-none text-slate-300 py-1" placeholder="Optional" />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                      placeholder={`Type a ${selectedChannel.toLowerCase()} message...`}
-                      className="flex-1 bg-slate-950 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-blue-500 outline-none resize-none h-20"
+                      placeholder={selectedChannel === 'INTERNAL' ? "Add an internal note..." : "Type your reply or a short phrase for AI to expand..."}
+                      className="flex-1 bg-slate-950 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-blue-500 outline-none resize-none h-24 custom-scrollbar"
                     />
                     <button 
                       onClick={handleSendMessage}
-                      className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl transition-colors flex items-center justify-center h-20 w-20"
+                      className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl transition-colors flex items-center justify-center h-24 w-20 shadow-lg shadow-blue-500/20"
                     >
                       <Send className="w-5 h-5" />
                     </button>
@@ -540,110 +688,153 @@ export default function CommunicationCenter() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-slate-500">
-                Select a conversation to start
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
+                <MessageSquare className="w-12 h-12 opacity-20" />
+                <p>Select a ticket to view details</p>
               </div>
             )}
           </div>
 
           {/* Right Sidebar: Context & Tasks */}
-          <div className="glass rounded-2xl border border-white/10 flex flex-col overflow-hidden">
+          <div className="lg:col-span-3 glass rounded-2xl border border-white/10 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-white/10 bg-white/5">
               <h3 className="font-bold text-white flex items-center gap-2">
-                <Bot className="w-4 h-4 text-blue-400" /> AI Context & Tasks
+                <Bot className="w-4 h-4 text-blue-400" /> AI Analysis & Sync
               </h3>
             </div>
             
-            <div className="p-4 overflow-y-auto flex-1 space-y-6">
-              {/* AI Insights */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">NowCerts Auto-Match</h4>
-                <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Client ID:</span>
-                    <span className="text-white font-mono">{activeThread?.clientId || '--'}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Active Policies:</span>
-                    <span className="text-white">2 (Auto, Home)</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Risk Score:</span>
-                    <span className="text-emerald-400">Low</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Scheduled Tasks */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
-                  Scheduled Tasks
-                  <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full text-[10px]">Google Calendar</span>
-                </h4>
-                <div className="space-y-3">
-                  {tasks.map(task => (
-                    <div key={task.id} className="bg-slate-800/50 border border-white/5 rounded-xl p-3">
-                      <div className="font-medium text-sm text-white mb-1">{task.title}</div>
-                      <div className="text-xs text-slate-400 flex items-center gap-1 mb-1">
-                        <User className="w-3 h-3" /> {task.assignee.split('@')[0]}
-                      </div>
-                      <div className="text-xs text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {task.date.toLocaleDateString()}
-                      </div>
+            {activeTicket ? (
+                <div className="p-4 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
+                
+                {/* NowCerts Sync Status */}
+                <div>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">NowCerts Integration</h4>
+                    <div className="bg-slate-800/50 border border-white/5 rounded-xl p-4 space-y-3">
+                        {activeTicket.nowCertsProfileId ? (
+                            <>
+                                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                                    <CheckCircle2 className="w-4 h-4" /> Profile Matched
+                                </div>
+                                <div className="text-xs text-slate-400 font-mono break-all">{activeTicket.nowCertsProfileId}</div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                                    <AlertCircle className="w-4 h-4" /> No Profile Match
+                                </div>
+                                <div className="flex gap-2">
+                                  <input 
+                                    type="text" 
+                                    value={ncSearchQuery} 
+                                    onChange={e => setNcSearchQuery(e.target.value)} 
+                                    placeholder="Search name or email..." 
+                                    className="flex-1 bg-slate-950 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none"
+                                  />
+                                  <button 
+                                    onClick={handleManualNCSearch} 
+                                    disabled={isSearchingNC || !ncSearchQuery.trim()}
+                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                                  >
+                                    {isSearchingNC ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Search'}
+                                  </button>
+                                </div>
+                                {ncSearchResults.length > 0 && (
+                                  <div className="mt-2 space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                                    {ncSearchResults.map(res => (
+                                      <div key={res.databaseId || res.id} className="p-2 bg-white/5 border border-white/10 rounded-lg flex justify-between items-center gap-2">
+                                        <div className="min-w-0">
+                                          <div className="text-xs font-bold text-white truncate">{res.firstName} {res.lastName}</div>
+                                          <div className="text-[10px] text-slate-400 truncate">{res.eMail || res.email}</div>
+                                        </div>
+                                        <button 
+                                          onClick={() => linkNcProfile(res.databaseId || res.id)}
+                                          className="px-2 py-1 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded text-[10px] font-bold uppercase tracking-widest transition-colors shrink-0"
+                                        >
+                                          Link
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <button 
+                                  onClick={() => alert("This would open a modal to create a new NowCerts profile.")}
+                                  className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold text-white transition-colors border border-white/10 mt-2"
+                                >
+                                  + Create New Profile
+                                </button>
+                            </>
+                        )}
+                        
+                        {activeTicket.policyNumber && (
+                            <div className="pt-3 border-t border-white/10">
+                                <div className="text-[10px] text-slate-500 uppercase mb-1">Detected Policy</div>
+                                <div className="text-sm font-bold text-white">{activeTicket.policyNumber}</div>
+                                <div className="text-xs text-slate-400">{activeTicket.carrier || 'Unknown Carrier'}</div>
+                            </div>
+                        )}
                     </div>
-                  ))}
-                  {tasks.length === 0 && (
-                    <div className="text-sm text-slate-500 text-center py-4">No pending tasks</div>
-                  )}
                 </div>
-              </div>
 
-              {/* Google Drive Files */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
-                  Google Drive Files
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] transition-colors flex items-center gap-1"
-                  >
-                    {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />} Upload
-                  </button>
-                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                </h4>
-                <div className="space-y-2">
-                  {driveFiles.length === 0 ? (
-                    <div className="text-xs text-slate-500 text-center py-4">No files found</div>
-                  ) : (
-                    driveFiles.map((file, idx) => (
-                      <a 
-                        key={idx}
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-2 bg-slate-800/50 hover:bg-slate-800 border border-white/5 rounded-xl transition-colors group"
-                      >
-                        <FileText className="w-4 h-4 text-emerald-400" />
-                        <span className="text-xs text-white truncate flex-1">{file.name}</span>
-                        <Download className="w-3 h-3 text-slate-500 group-hover:text-emerald-400" />
-                      </a>
-                    ))
-                  )}
+                {/* AI Automated Tasks */}
+                <div>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Bot className="w-3 h-3" /> AI Automations
+                    </h4>
+                    <div className="space-y-2">
+                        {activeTicket.aiTasks.length > 0 ? activeTicket.aiTasks.map((task, i) => (
+                            <div key={i} className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex items-start justify-between gap-3 group">
+                                <span className="text-xs text-blue-200 leading-relaxed">{task}</span>
+                                <button 
+                                    onClick={() => executeAITask(task)}
+                                    className="p-1.5 bg-blue-500/20 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-colors shrink-0"
+                                    title="Execute Task"
+                                >
+                                    <Play className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )) : (
+                            <div className="text-xs text-slate-500 italic p-3 bg-white/5 rounded-xl border border-white/5">No automated tasks identified.</div>
+                        )}
+                    </div>
                 </div>
-              </div>
 
-              {/* Long Term Memory */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Long Term Memory</h4>
-                <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-xs text-slate-300 space-y-2">
-                  <p>• Prefers email communication.</p>
-                  <p>• Has a teenage driver (added 2023).</p>
-                  <p>• Renewals typically handled in August.</p>
-                  <p className="text-blue-400 mt-2">All chats synced to Drive & NowCerts.</p>
+                {/* Manual Action Items */}
+                <div>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="w-3 h-3" /> Manual Action Items
+                    </h4>
+                    <div className="space-y-2">
+                        {activeTicket.actionItems.length > 0 ? activeTicket.actionItems.map((item, i) => (
+                            <div key={i} className="bg-slate-800/50 border border-white/5 rounded-xl p-3 flex items-start gap-3">
+                                <input type="checkbox" className="mt-0.5 rounded border-white/20 bg-slate-900 text-blue-500 focus:ring-blue-500/50" />
+                                <span className="text-xs text-slate-300 leading-relaxed">{item}</span>
+                            </div>
+                        )) : (
+                            <div className="text-xs text-slate-500 italic p-3 bg-white/5 rounded-xl border border-white/5">No manual actions required.</div>
+                        )}
+                    </div>
                 </div>
-              </div>
 
-            </div>
+                {/* Extracted Labels */}
+                <div>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Tag className="w-3 h-3" /> Tags & Labels
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                        {activeTicket.labels.map(label => (
+                            <span key={label} className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-slate-300 uppercase">
+                                {label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                </div>
+            ) : (
+                <div className="flex-1 flex items-center justify-center text-slate-500 p-6 text-center text-sm">
+                    Select a ticket to view AI analysis, tasks, and NowCerts sync status.
+                </div>
+            )}
           </div>
 
         </div>

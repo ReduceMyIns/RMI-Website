@@ -530,19 +530,50 @@ const AIToolsPage: React.FC<{ user?: any }> = ({ user }) => {
       </div>
 
       {!activeTool ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <ToolCard title="Compliance Manager" desc="Track vendor COIs, set requirements, and manage risk." icon={Shield} color="bg-blue-500" onClick={() => navigate('/compliance')} />
-          <ToolCard title="Vehicle Recall Checker" desc="Instant recall check using live NHTSA databases." icon={AlertOctagon} color="bg-red-500" onClick={() => initiateTool('safety')} />
-          <ToolCard title="File TN Owner Report" desc="Mandatory filing for accidents involving injury, death, or >$400 gov property damage. Must be filed within 20 days." icon={FileSignature} color="bg-indigo-500" onClick={() => window.open('https://dl.safety.tn.gov/_/#2', '_blank')} />
-          <ToolCard title="TN Crash Report Purchase" desc="Access the official Tennessee portal to purchase collision reports." icon={FileText} color="bg-slate-500" onClick={() => window.open('https://apps.tn.gov/purchasetncrash/crashreport.jsp', '_blank')} />
-          <ToolCard title="Bill of Sale Generator" desc="Create a legal vehicle bill of sale instantly with AI terms." icon={FileSignature} color="bg-emerald-500" onClick={() => initiateTool('bill_of_sale')} />
-          <ToolCard title="Safety Plan Generator" desc="Custom OSHA-compliant safety manuals for your business." icon={Shield} color="bg-orange-500" onClick={() => initiateTool('safety_plan')} />
-          <ToolCard title="Business Plan Wizard" desc="Interactive AI consultant for custom business planning." icon={TrendingUp} color="bg-indigo-500" onClick={() => initiateTool('business_plan')} />
-          <ToolCard title="Vehicle Inspector" desc="Verify vehicle condition for coverage." icon={Car} color="bg-blue-600" onClick={() => initiateTool('vehicle')} />
-          <ToolCard title="Home Inspector" desc="AI-guided photo inspection for homeowners." icon={Camera} color="bg-orange-500" onClick={() => initiateTool('inspection')} />
-          <ToolCard title="Policy Decoder" desc="Upload any policy to get a clear breakdown." icon={FileCheck} color="bg-emerald-500" onClick={() => initiateTool('policy')} />
-          <ToolCard title="AI Claim Assistant" desc="Generate professional statements for adjusters." icon={LifeBuoy} color="bg-purple-600" onClick={() => initiateTool('claim')} />
-          <ToolCard title="Defensive Driving" desc="Interactive safety course for discounts." icon={Award} color="bg-green-600" onClick={() => navigate('/safety-course')} />
+        <div className="space-y-12">
+          {[
+            {
+              title: "Auto & Vehicles",
+              tools: [
+                { title: "Vehicle Inspector", desc: "Verify vehicle condition for coverage.", icon: Car, color: "bg-blue-600", onClick: () => initiateTool('vehicle') },
+                { title: "Vehicle Recall Checker", desc: "Instant recall check using live NHTSA databases.", icon: AlertOctagon, color: "bg-red-500", onClick: () => initiateTool('safety') },
+                { title: "Bill of Sale Generator", desc: "Create a legal vehicle bill of sale instantly with AI terms.", icon: FileSignature, color: "bg-emerald-500", onClick: () => initiateTool('bill_of_sale') },
+                { title: "Defensive Driving", desc: "Interactive safety course for discounts.", icon: Award, color: "bg-green-600", onClick: () => navigate('/safety-course') },
+                { title: "File TN Owner Report", desc: "Mandatory filing for accidents involving injury, death, or >$400 gov property damage.", icon: FileSignature, color: "bg-indigo-500", onClick: () => window.open('https://dl.safety.tn.gov/_/#2', '_blank') },
+                { title: "TN Crash Report Purchase", desc: "Access the official Tennessee portal to purchase collision reports.", icon: FileText, color: "bg-slate-500", onClick: () => window.open('https://apps.tn.gov/purchasetncrash/crashreport.jsp', '_blank') },
+              ]
+            },
+            {
+              title: "Home & Property",
+              tools: [
+                { title: "Home Inspector", desc: "AI-guided photo inspection for homeowners.", icon: Camera, color: "bg-orange-500", onClick: () => initiateTool('inspection') },
+              ]
+            },
+            {
+              title: "Business & Commercial",
+              tools: [
+                { title: "Compliance Manager", desc: "Track vendor COIs, set requirements, and manage risk.", icon: Shield, color: "bg-blue-500", onClick: () => navigate('/compliance') },
+                { title: "Safety Plan Generator", desc: "Custom OSHA-compliant safety manuals for your business.", icon: Shield, color: "bg-orange-500", onClick: () => initiateTool('safety_plan') },
+                { title: "Business Plan Wizard", desc: "Interactive AI consultant for custom business planning.", icon: TrendingUp, color: "bg-indigo-500", onClick: () => initiateTool('business_plan') },
+              ]
+            },
+            {
+              title: "General Insurance",
+              tools: [
+                { title: "Policy Decoder", desc: "Upload any policy to get a clear breakdown.", icon: FileCheck, color: "bg-emerald-500", onClick: () => initiateTool('policy') },
+                { title: "AI Claim Assistant", desc: "Generate professional statements for adjusters.", icon: LifeBuoy, color: "bg-purple-600", onClick: () => initiateTool('claim') },
+              ]
+            }
+          ].map((category, idx) => (
+            <div key={idx} className="space-y-6">
+              <h2 className="text-2xl font-heading font-bold text-white border-b border-white/10 pb-2">{category.title}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {category.tools.map((tool, tIdx) => (
+                  <ToolCard key={tIdx} {...tool} />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="glass-card rounded-[3rem] p-8 md:p-12 border-white/10 min-h-[60vh] relative animate-in zoom-in-95">

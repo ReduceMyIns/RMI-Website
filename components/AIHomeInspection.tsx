@@ -29,6 +29,8 @@ interface UserInfo {
   city: string;
   state: string;
   zip: string;
+  occupancyType: string;
+  policyType: string;
 }
 
 const AIHomeInspection: React.FC = () => {
@@ -39,7 +41,8 @@ const AIHomeInspection: React.FC = () => {
   // Intake Form State
   const [userInfo, setUserInfo] = useState<UserInfo>({
     firstName: '', lastName: '', email: '', phone: '',
-    addressLine1: '', unit: '', city: '', state: 'TN', zip: ''
+    addressLine1: '', unit: '', city: '', state: 'TN', zip: '',
+    occupancyType: 'Owner-Occupied', policyType: 'HO-3 Homeowners'
   });
 
   const [data, setData] = useState<Partial<UnderwritingData>>({});
@@ -56,7 +59,7 @@ const AIHomeInspection: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const result = await researchProperty(fullAddress);
+      const result = await researchProperty(fullAddress, userInfo.occupancyType, userInfo.policyType);
       
       // Merge AI result with existing data structure defaults to ensure editing works
       setData({
@@ -82,43 +85,63 @@ const AIHomeInspection: React.FC = () => {
     const clientId = auth.currentUser?.uid || 'guest';
 
     // 1. Identity & Location
-    reqs.push({ group: 'Verification', category: 'House Number / Mailbox', description: 'Clear photo verifying address identity.' });
+    reqs.push({ group: 'Verification', category: 'House Number / Mailbox', description: 'Clear photo verifying address identity. This ensures we are underwriting the correct property.' });
 
     // 2. Exterior - Flow: Front -> Rear -> Roof -> Structures
-    reqs.push({ group: 'Exterior', category: 'Front Elevation', description: 'Full view of the home from the street.' });
-    reqs.push({ group: 'Exterior', category: 'Roof Condition', description: 'Close-up of shingles/tiles to show wear.' });
-    reqs.push({ group: 'Exterior', category: 'Rear Elevation', description: 'Full view of the back yard and home.' });
+    reqs.push({ group: 'Exterior', category: 'Front Elevation', description: 'Full view of the home from the street. This helps us understand the general condition and construction type.' });
+    reqs.push({ group: 'Exterior', category: 'Roof Condition', description: 'Close-up of shingles/tiles to show wear. A healthy roof prevents water damage claims.' });
+    reqs.push({ group: 'Exterior', category: 'Rear Elevation', description: 'Full view of the back yard and home. This reveals hazards not visible from the street.' });
+    
+    if (data.hasDecksOrPorches) {
+      reqs.push({ group: 'Exterior', category: 'Decks / Porches', description: 'Wide shot showing condition of decks, porches, and handrails/guardrails. This helps us assess liability risks.' });
+    }
+    
+    if (data.hasSolarPanels) {
+      reqs.push({ group: 'Exterior', category: 'Solar Panels', description: 'Clear view of solar panels on the roof or property. This ensures they are properly covered.' });
+    }
 
     // Detached Structures Logic
     if (data.hasDetachedStructures) {
        const count = data.detachedStructureCount || 1;
+       const types = data.detachedStructureTypes || [];
        for (let i = 1; i <= count; i++) {
+          const typeName = types[i-1] ? types[i-1] : `Outbuilding`;
           const suffix = count > 1 ? ` #${i}` : '';
-          reqs.push({ group: 'Exterior', category: `Detached Structure${suffix} - Front`, description: `Front view of outbuilding/garage${suffix}.` });
-          reqs.push({ group: 'Exterior', category: `Detached Structure${suffix} - Rear`, description: `Rear view of outbuilding/garage${suffix}.` });
-          reqs.push({ group: 'Exterior', category: `Detached Structure${suffix} - Roof`, description: `Roof condition of outbuilding${suffix}.` });
+          reqs.push({ group: 'Exterior', category: `${typeName}${suffix} - Front`, description: `Front view of ${typeName.toLowerCase()}${suffix}.` });
+          reqs.push({ group: 'Exterior', category: `${typeName}${suffix} - Rear`, description: `Rear view of ${typeName.toLowerCase()}${suffix}.` });
+          reqs.push({ group: 'Exterior', category: `${typeName}${suffix} - Roof`, description: `Roof condition of ${typeName.toLowerCase()}${suffix}.` });
        }
     }
 
     // Pool Logic
     if (data.hasPool) {
-       reqs.push({ group: 'Exterior', category: 'Swimming Pool', description: 'Wide shot showing pool and any fencing.' });
-       reqs.push({ group: 'Exterior', category: 'Pool Equipment', description: 'Photo of pump, heater, and filter system.' });
+       reqs.push({ group: 'Exterior', category: 'Swimming Pool', description: 'Wide shot showing pool and any fencing/barriers. Fences are critical for liability protection.' });
+       reqs.push({ group: 'Exterior', category: 'Pool Equipment', description: 'Photo of pump, heater, and filter system. This helps us value the equipment.' });
     }
 
     // 3. Systems (Garage/Utility)
-    reqs.push({ group: 'Systems', category: 'Garage Interior', description: 'Wide shot of garage interior.' });
-    reqs.push({ group: 'Systems', category: 'HVAC Unit', description: 'Data plate of heating/cooling unit.' });
-    reqs.push({ group: 'Systems', category: 'Water Heater', description: 'Full view showing straps and relief valve.' });
+    reqs.push({ group: 'Systems', category: 'Electrical Panel', description: 'Close-up of the electrical panel with the door open, including breakers and labels. Modern panels reduce fire risk.' });
+    reqs.push({ group: 'Systems', category: 'HVAC Unit', description: 'Data plate and overall condition of heating/cooling unit. Well-maintained HVAC systems prevent winter freeze claims.' });
+    reqs.push({ group: 'Systems', category: 'Water Heater', description: 'Full view showing straps, relief valve, and surrounding floor. This helps us verify safety features that prevent water damage.' });
 
     // 4. Interior - Flow: Kitchen -> Bathrooms
-    reqs.push({ group: 'Interior', category: 'Kitchen Sink Plumbing', description: 'Under-sink piping in kitchen.' });
+    reqs.push({ group: 'Interior', category: 'Main Kitchen', description: 'Wide shot of the main kitchen showing cabinets and appliances. This helps establish replacement cost.' });
+    reqs.push({ group: 'Interior', category: 'Kitchen Sink Plumbing', description: 'Under-sink piping in kitchen, checking for leaks. Catching leaks early prevents major water damage.' });
+    
+    if (data.hasMultipleKitchens) {
+      reqs.push({ group: 'Interior', category: 'Secondary Kitchen', description: 'Wide shot of the secondary kitchen.' });
+    }
 
     // Bathroom Logic
     const baths = data.numberOfBathrooms || 1;
     for (let i = 1; i <= baths; i++) {
-        reqs.push({ group: 'Interior', category: `Bathroom ${i} - Plumbing`, description: `Under-sink piping for bathroom ${i}.` });
-        reqs.push({ group: 'Interior', category: `Bathroom ${i} - Shower/Tub`, description: `Condition of shower/tub surround in bathroom ${i}.` });
+        reqs.push({ group: 'Interior', category: `Bathroom ${i} - Overview`, description: `Stand in the doorway and take a wide photo of bathroom ${i}.` });
+        reqs.push({ group: 'Interior', category: `Bathroom ${i} - Plumbing`, description: `Under-sink piping for bathroom ${i}. Checking for leaks prevents major water damage.` });
+        reqs.push({ group: 'Interior', category: `Bathroom ${i} - Shower/Tub`, description: `Condition of shower/tub surround in bathroom ${i}, focusing on caulking and fixtures. Good caulking prevents hidden water damage.` });
+    }
+    
+    if (data.hasAccessoryDwellingUnit) {
+      reqs.push({ group: 'Interior', category: 'Accessory Dwelling Unit', description: 'Wide shot of the ADU interior living space.' });
     }
 
     return reqs.map((r, idx) => ({ ...r, id: `req-${idx}`, clientId, status: 'Required' as const } as PhotoRequirement));
@@ -301,6 +324,30 @@ const AIHomeInspection: React.FC = () => {
                                   {req.aiAnalysis && (
                                       <div className="bg-slate-50 p-3 rounded-lg text-xs text-slate-700 border border-slate-200 mt-2">
                                           <strong>AI Analysis:</strong> {req.aiAnalysis.detailedSummary}
+                                          {req.aiAnalysis.identifiedFeatures && (
+                                            <div className="mt-2 space-y-1">
+                                              {req.aiAnalysis.identifiedFeatures.hazardsAndRedFlags && req.aiAnalysis.identifiedFeatures.hazardsAndRedFlags.length > 0 && (
+                                                <div className="text-red-600">
+                                                  <strong>Hazards Detected:</strong> {req.aiAnalysis.identifiedFeatures.hazardsAndRedFlags.join(', ')}
+                                                </div>
+                                              )}
+                                              {req.aiAnalysis.identifiedFeatures.safetyFeatures && req.aiAnalysis.identifiedFeatures.safetyFeatures.length > 0 && (
+                                                <div className="text-emerald-600">
+                                                  <strong>Safety Features:</strong> {req.aiAnalysis.identifiedFeatures.safetyFeatures.join(', ')}
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                          {req.aiAnalysis.followUpQuestions && req.aiAnalysis.followUpQuestions.length > 0 && (
+                                            <div className="mt-2 p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                              <strong className="text-slate-800 block mb-1">Follow-up Questions:</strong>
+                                              <ul className="list-disc pl-4 space-y-1 text-slate-600">
+                                                {req.aiAnalysis.followUpQuestions.map((q, i) => (
+                                                  <li key={i}>{q}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          )}
                                       </div>
                                   )}
                               </div>
@@ -312,6 +359,10 @@ const AIHomeInspection: React.FC = () => {
                       <button onClick={handleSaveReport} disabled={isSaving} className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 shadow-lg disabled:opacity-50">
                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} Save
                       </button>
+                  </div>
+                  
+                  <div className="mt-8 p-4 bg-slate-100 rounded-xl text-xs text-slate-500 text-center">
+                    <strong>Disclaimer:</strong> This AI-generated report is for informational purposes only. It does not guarantee coverage, pricing, policy issuance, or renewal. This is not a substitute for a professional engineering or legal assessment. Please consult with your agent for official underwriting decisions.
                   </div>
               </div>
           </div>
@@ -352,6 +403,21 @@ const AIHomeInspection: React.FC = () => {
              <div className="grid grid-cols-2 gap-4">
                <input required type="email" placeholder="Email" value={userInfo.email} onChange={e => setUserInfo({...userInfo, email: e.target.value})} className="bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-emerald-500" />
                <input required type="tel" placeholder="Phone" value={userInfo.phone} onChange={e => setUserInfo({...userInfo, phone: e.target.value})} className="bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-emerald-500" />
+             </div>
+
+             <div className="grid grid-cols-2 gap-4">
+               <select value={userInfo.occupancyType} onChange={e => setUserInfo({...userInfo, occupancyType: e.target.value})} className="bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-emerald-500 bg-slate-900">
+                 <option value="Owner-Occupied">Owner-Occupied</option>
+                 <option value="Tenant-Occupied">Tenant-Occupied</option>
+                 <option value="Vacant">Vacant</option>
+                 <option value="Seasonal">Seasonal</option>
+                 <option value="Short-Term Rental">Short-Term Rental</option>
+               </select>
+               <select value={userInfo.policyType} onChange={e => setUserInfo({...userInfo, policyType: e.target.value})} className="bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-emerald-500 bg-slate-900">
+                 <option value="HO-3 Homeowners">HO-3 Homeowners</option>
+                 <option value="DP-3 Dwelling Fire">DP-3 Dwelling Fire</option>
+                 <option value="Landlord">Landlord</option>
+               </select>
              </div>
 
              <div className="space-y-4 pt-4 border-t border-white/5">
@@ -399,6 +465,17 @@ const AIHomeInspection: React.FC = () => {
                  </div>
                  <div className="p-3 bg-emerald-500/10 rounded-full text-emerald-400"><Edit3 className="w-6 h-6"/></div>
               </div>
+
+              {data.humanSummary && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl">
+                  <h3 className="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                    <Home className="w-5 h-5" /> Property Profile
+                  </h3>
+                  <p className="text-emerald-100/80 text-sm leading-relaxed">
+                    {data.humanSummary}
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/5 p-6 rounded-3xl border border-white/5">
                  <div className="space-y-2">
@@ -624,6 +701,32 @@ const AIHomeInspection: React.FC = () => {
                       {req.status === 'Verified' && req.aiAnalysis && (
                         <div className="mt-3 p-3 rounded-xl text-[10px] leading-relaxed bg-emerald-500/10 text-emerald-300">
                            <strong>AI Feedback:</strong> {req.aiAnalysis.detailedSummary}
+                           
+                           {req.aiAnalysis.identifiedFeatures && (
+                             <div className="mt-2 space-y-1">
+                               {req.aiAnalysis.identifiedFeatures.hazardsAndRedFlags && req.aiAnalysis.identifiedFeatures.hazardsAndRedFlags.length > 0 && (
+                                 <div className="text-red-400">
+                                   <strong>Hazards Detected:</strong> {req.aiAnalysis.identifiedFeatures.hazardsAndRedFlags.join(', ')}
+                                 </div>
+                               )}
+                               {req.aiAnalysis.identifiedFeatures.safetyFeatures && req.aiAnalysis.identifiedFeatures.safetyFeatures.length > 0 && (
+                                 <div className="text-emerald-400">
+                                   <strong>Safety Features:</strong> {req.aiAnalysis.identifiedFeatures.safetyFeatures.join(', ')}
+                                 </div>
+                               )}
+                             </div>
+                           )}
+
+                           {req.aiAnalysis.followUpQuestions && req.aiAnalysis.followUpQuestions.length > 0 && (
+                             <div className="mt-2 p-2 bg-slate-900/50 rounded-lg border border-emerald-500/20">
+                               <strong className="text-emerald-400 block mb-1">Follow-up Questions:</strong>
+                               <ul className="list-disc pl-4 space-y-1 text-emerald-100/80">
+                                 {req.aiAnalysis.followUpQuestions.map((q, i) => (
+                                   <li key={i}>{q}</li>
+                                 ))}
+                               </ul>
+                             </div>
+                           )}
                         </div>
                       )}
                     </div>

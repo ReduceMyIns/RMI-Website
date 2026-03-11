@@ -85,12 +85,36 @@ export const getAIResponse = async (prompt: string, history: any[], useThinking:
   };
 };
 
-export const researchProperty = async (address: string) => {
+export const researchProperty = async (address: string, occupancyType?: string, policyType?: string) => {
   const ai = getAi();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-3.1-pro-preview',
     contents: `Research this property address for insurance underwriting data: ${address}. 
-    Return a JSON object with: yearBuilt, sqft, exteriorMaterials, roofType, estimatedRoofAge, hasPool (boolean), replacementCost (number), fireProtectionClass (string), floodZone (string), numberOfBathrooms (number), hasDetachedStructures (boolean), detachedStructureCount (number).`,
+    Occupancy Type: ${occupancyType || 'Unknown'}
+    Intended Policy Type: ${policyType || 'Unknown'}
+    
+    Return a JSON object with: 
+    - yearBuilt (number)
+    - sqft (number)
+    - stories (number)
+    - propertyType (string)
+    - exteriorMaterials (string)
+    - roofType (string)
+    - estimatedRoofAge (number)
+    - hasPool (boolean)
+    - replacementCost (number)
+    - fireProtectionClass (string)
+    - floodZone (string)
+    - numberOfBedrooms (number)
+    - numberOfBathrooms (number)
+    - hasMultipleKitchens (boolean)
+    - hasAccessoryDwellingUnit (boolean)
+    - hasDetachedStructures (boolean)
+    - detachedStructureCount (number)
+    - detachedStructureTypes (array of strings, e.g., ["shed", "barn", "detached garage"])
+    - hasDecksOrPorches (boolean)
+    - hasSolarPanels (boolean)
+    - humanSummary (string: a friendly summary of the property profile for the user, e.g., "Based on public data, your home appears to be a 2-story single-family home built in 1995 with 3 bedrooms and 2 bathrooms...")`,
     config: {
       responseMimeType: 'application/json',
       tools: [{ googleSearch: {} }]
@@ -313,6 +337,13 @@ export const analyzeInspectionPhoto = async (
   Category: ${category}
   Requirement Description: ${description}
 
+  Attempt to identify:
+  - Construction and finishes (roofing, siding, flooring, countertops)
+  - Systems and equipment (HVAC, plumbing, electrical)
+  - Safety features (detectors, handrails, pool barriers, security)
+  - Hazards and red flags (stains, mold, trip hazards, space heaters, exposed wiring, roof damage)
+  - Contents of underwriting interest (wood stoves, large dogs, trampolines, high-value items)
+
   Return a JSON object with this structure:
   {
     "matches": boolean, // Does the photo match the category/description?
@@ -334,12 +365,20 @@ export const analyzeInspectionPhoto = async (
       "strengths": string[],
       "concerns": string[]
     },
+    "identifiedFeatures": {
+      "constructionAndFinishes": ["string"],
+      "systemsAndEquipment": ["string"],
+      "safetyFeatures": ["string"],
+      "hazardsAndRedFlags": ["string"],
+      "underwritingContents": ["string"]
+    },
+    "followUpQuestions": ["string"], // Concise follow-up questions if hazards/features need clarification
     "inspectorNotes": string,
     "detailedSummary": string
   }`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-3.1-pro-preview',
     contents: [
       {
         role: 'user',
@@ -377,6 +416,11 @@ export const connectInspectionSession = (pendingItems: string[], currentFocus: s
             4. Be concise and professional.
             
             If you see the item clearly in the video frame, say "I see it, please hold steady" or "Capture now".
+            
+            CRITICAL RULES:
+            - Never guarantee coverage, pricing, or policy issuance.
+            - Do not give legal or engineering advice.
+            - If you see a hazard, politely ask them to capture it clearly, but do not offer repair advice.
             `,
             outputAudioTranscription: {},
         },

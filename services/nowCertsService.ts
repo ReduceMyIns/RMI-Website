@@ -161,11 +161,17 @@ export const nowCertsApi = {
         headers: { 
           'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        cache: 'no-store'
       });
       
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      return await response.json();
+      if (!response.ok) {
+          const errText = await response.text();
+          console.error(`searchInsured Status ${response.status}: ${errText}`);
+          throw new Error(`Status ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
     } catch (err) {
       console.warn("Search Failed:", err);
       throw err;
@@ -174,17 +180,17 @@ export const nowCertsApi = {
 
   async updateInsured(data: any) {
     try {
-      // Use PushJsonQuoteApplications for updates as well, matching by NCDatabaseId
-      // This endpoint handles both create and update based on ID match
+      const token = await this.getAccessToken();
+      
+      // Validate GUID format
+      const id = data.databaseId || data.id;
+      const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      
       const payload: any = {
-        AgencyId: AGENCY_ID,
-        Form_Name: "Portal Profile Update",
-        NCDatabaseId: data.databaseId || data.id, // Critical for update
         firstName: data.firstName,
         middleName: data.middleName,
         lastName: data.lastName,
         dateOfBirth: data.dob || data.dateOfBirth,
-        type: "Prospect", // Default type, system will update existing record regardless
         addressLine1: data.addressLine1,
         addressLine2: data.addressLine2,
         state: data.state,
@@ -197,15 +203,20 @@ export const nowCertsApi = {
         insuredType: data.insuredType
       };
 
+      if (isGuid) {
+        payload.databaseId = id;
+      }
+
       if (data.commercialName) payload.commercialName = data.commercialName;
       if (data.dba) payload.dba = data.dba;
       if (data.fein) payload.fein = data.fein;
       if (data.website) payload.website = data.website;
 
-      const response = await fetch(`${BASE_URL}/api/PushJsonQuoteApplications`, {
+      const response = await fetch(`${BASE_URL}/api/Insured/Insert`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -349,43 +360,73 @@ export const nowCertsApi = {
 
     try {
       const token = await this.getAccessToken();
-      let filter = "";
-      // Prioritize InsuredDatabaseId if available
-      const insuredId = user.id || user.insuredDatabaseId || user.databaseId;
+      let insuredId = user.insuredDatabaseId || user.databaseId || user.id;
+      const isGuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-      if (insuredId && insuredId !== "SIM-FORCE-01") {
-        // If we have a specific ID, filter by it
-        filter = `$filter=InsuredDatabaseId eq '${insuredId}'`;
-      } else {
-        // Fallback to email search if no specific ID
-        const email = user.eMail || user.email || '';
-        if (email) {
-            filter = `$filter=contains(InsuredEmail, '${email}')`;
-        } else {
-            // If no ID and no email, we can't fetch policies
-            console.warn("getPolicies: No valid user ID or email to fetch policies.");
-            return { value: [] };
-        }
+      const endpoint = APP_CONFIG.apis.nowCerts.endpoints.policyList || "/api/PolicyDetailList";
+
+      // Always try to find the insured by email first to catch all policies across duplicate records
+      const email = user.eMail || user.email || '';
+      if (email) {
+          const searchResult = await this.searchInsured({ email });
+          if (searchResult && searchResult.value && searchResult.value.length > 0) {
+              // Try to find policies for all matching insureds
+              let allPolicies: any[] = [];
+              for (const insured of searchResult.value) {
+                  const id = insured.id || insured.databaseId;
+                  if (!id) continue;
+                  const query = `$filter=insuredDatabaseId eq ${id}&$top=100&$skip=0&$orderby=effectiveDate desc`;
+                  const url = `${BASE_URL}${endpoint}?${encodeURI(query)}`;
+                  const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 
+                      'Accept': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    cache: 'no-store'
+                  });
+                  if (response.ok) {
+                      const data = await response.json();
+                      if (data && data.value && Array.isArray(data.value)) {
+                          allPolicies = allPolicies.concat(data.value);
+                      }
+                  }
+              }
+              
+              // If we found policies, return them. If not, maybe fall back to insuredId if we have one.
+              if (allPolicies.length > 0) {
+                  return { value: allPolicies };
+              }
+          }
       }
 
-      const url = `${BASE_URL}/api/PolicyDetailList?${encodeURI(filter)}`;
+      // Fallback to insuredId if email search didn't yield policies or email is missing
+      if (!insuredId || insuredId === "SIM-FORCE-01" || !isGuid(insuredId)) {
+          console.warn("getPolicies: No valid user ID or email to fetch policies.");
+          return { value: [] };
+      }
+
+      const query = `$filter=insuredDatabaseId eq ${insuredId}&$top=100&$skip=0&$orderby=effectiveDate desc`;
+      const url = `${BASE_URL}${endpoint}?${encodeURI(query)}`;
 
       const response = await fetch(url, {
         method: 'GET',
         headers: { 
           'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        cache: 'no-store'
       });
 
       if (!response.ok) {
-         console.warn(`getPolicies failed with status: ${response.status}`);
+         const errText = await response.text();
+         console.warn(`getPolicies failed with status: ${response.status}, text: ${errText}`);
          return { value: [] };
       }
       return await response.json();
-    } catch (e) {
+    } catch (e: any) {
       console.error("Policy Fetch Error", e);
-      return { value: [] };
+      return { value: [], error: e.message || "Unknown error" };
     }
   },
 
@@ -506,7 +547,8 @@ export const nowCertsApi = {
   async getVehicles(policyId: string) {
     try {
        const token = await this.getAccessToken();
-       const response = await fetch(`${BASE_URL}/api/VehicleList?$filter=policyIds/any(p: p eq '${policyId}')`, {
+       const query = `$filter=policyIds/any(p: p eq '${policyId}')`;
+       const response = await fetch(`${BASE_URL}/api/VehicleList?${encodeURI(query)}`, {
         method: 'GET',
         headers: { 
           'Accept': 'application/json',

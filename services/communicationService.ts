@@ -11,6 +11,7 @@ export interface Message {
   content: string;
   timestamp: string;
   channel: 'PORTAL' | 'EMAIL' | 'SMS' | 'VOICE' | 'INTERNAL';
+  isHtml?: boolean;
 }
 
 export interface Thread {
@@ -23,7 +24,79 @@ export interface Thread {
   unreadCount: number;
 }
 
+export interface Ticket {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  subject: string;
+  snippet: string;
+  updatedAt: string;
+  channel: 'PORTAL' | 'EMAIL' | 'SMS' | 'VOICE' | 'INTERNAL';
+  status: 'NEW' | 'OPEN' | 'PENDING' | 'RESOLVED';
+  labels: string[];
+  policyNumber?: string;
+  carrier?: string;
+  actionItems: string[];
+  aiTasks: string[];
+  messages: Message[];
+  nowCertsProfileId?: string;
+}
+
 export const communicationService = {
+  // --- TICKETS ---
+  async saveTicket(ticket: Ticket): Promise<void> {
+    try {
+      const response = await fetch('/api/db/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticket)
+      });
+      if (!response.ok) throw new Error('Failed to save ticket');
+    } catch (e) {
+      console.error("Error saving ticket via API", e);
+    }
+  },
+
+  async getTickets(): Promise<Ticket[]> {
+    try {
+      const response = await fetch('/api/db/tickets');
+      if (!response.ok) throw new Error('Failed to fetch tickets');
+      return await response.json();
+    } catch (e) {
+      console.error("Error fetching tickets via API", e);
+      return [];
+    }
+  },
+
+  subscribeToTickets(callback: (tickets: Ticket[]) => void) {
+    let isCancelled = false;
+    
+    const fetchTickets = async () => {
+      if (isCancelled) return;
+      try {
+        const response = await fetch('/api/db/tickets');
+        if (response.ok) {
+          const tickets = await response.json();
+          callback(tickets);
+        }
+      } catch (e) {
+        console.error("Error polling tickets via API", e);
+      }
+    };
+
+    // Initial fetch
+    fetchTickets();
+
+    // Poll every 10 seconds
+    const interval = setInterval(fetchTickets, 10000);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
+  },
+
   // --- THREADS & MESSAGES ---
   
   async getClientThreads(clientId: string): Promise<Thread[]> {
@@ -248,9 +321,10 @@ export const communicationService = {
     return data.url;
   },
 
-  async getGmailThreads(): Promise<any[]> {
+  async getGmailThreads(query?: string): Promise<any[]> {
     try {
-      const response = await fetch('/api/gmail/threads');
+      const qParam = query ? `?q=${encodeURIComponent(query)}` : '';
+      const response = await fetch(`/api/gmail/threads${qParam}`);
       if (!response.ok) throw new Error('Failed to fetch Gmail threads');
       const data = await response.json();
       return data.threads || [];
@@ -282,11 +356,11 @@ export const communicationService = {
     }
   },
 
-  async sendGmail(to: string, subject: string, body: string): Promise<any> {
+  async sendGmail(to: string, subject: string, body: string, cc?: string, bcc?: string): Promise<any> {
     const response = await fetch('/api/gmail/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, body }),
+      body: JSON.stringify({ to, subject, body, cc, bcc }),
     });
     
     if (!response.ok) {

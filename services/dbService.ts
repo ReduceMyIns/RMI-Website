@@ -135,18 +135,18 @@ export const dbService = {
   /**
    * Find an existing lead to pre-fill data
    */
-  async findExistingLead(email: string, phone: string): Promise<any> {
+  async findExistingLead(email: string | undefined, phone: string | undefined): Promise<any> {
     try {
       // Try server-side API first to bypass rules
       const response = await fetch('/api/db/leads');
       if (response.ok) {
         const leads = await response.json();
-        const cleanPhone = phone.replace(/\D/g, '');
+        const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
         
         // Filter in memory (acceptable for this scale)
         const match = leads.find((l: any) => {
-            if (l.email && l.email.toLowerCase() === email.toLowerCase()) return true;
-            if (l.phone && l.phone.replace(/\D/g, '') === cleanPhone) return true;
+            if (email && l.email && l.email.toLowerCase() === email.toLowerCase()) return true;
+            if (cleanPhone && l.phone && l.phone.replace(/\D/g, '') === cleanPhone) return true;
             return false;
         });
         
@@ -158,7 +158,7 @@ export const dbService = {
       try {
         const leadsRef = collection(db, "leads");
         
-        let q = query(leadsRef, where("email", "==", email), orderBy("createdAt", "desc"));
+        let q = query(leadsRef, where("email", "==", email || ""), orderBy("createdAt", "desc"));
         let snapshot = await getDocs(q);
   
         if (snapshot.empty && phone) {

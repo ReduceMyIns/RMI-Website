@@ -117,6 +117,35 @@ async function startServer() {
     }
   });
 
+  app.get('/api/db/tickets', async (req, res) => {
+    try {
+      const snapshot = await dbAdmin.collection('tickets').orderBy('updatedAt', 'desc').get();
+      const tickets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(tickets);
+    } catch (error: any) {
+      if (error.code === 7 || error.message?.includes('PERMISSION_DENIED')) {
+         res.status(403).json({ error: 'Firestore permission denied' });
+      } else {
+         console.error('Error fetching tickets:', error);
+         res.status(500).json({ error: 'Failed to fetch tickets' });
+      }
+    }
+  });
+
+  app.post('/api/db/tickets', async (req, res) => {
+    try {
+      const ticket = req.body;
+      if (!ticket || !ticket.id) {
+        return res.status(400).json({ error: 'Invalid ticket data' });
+      }
+      await dbAdmin.collection('tickets').doc(ticket.id).set(ticket);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error saving ticket:', error);
+      res.status(500).json({ error: 'Failed to save ticket' });
+    }
+  });
+
   app.get('/api/db/threads', async (req, res) => {
     try {
       const snapshot = await dbAdmin.collection('threads').get();
@@ -302,7 +331,8 @@ async function startServer() {
     if (!token) return res.status(401).json({ error: 'Gmail not connected' });
 
     try {
-      const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=20', {
+      const query = req.query.q ? `&q=${encodeURIComponent(req.query.q as string)}` : '';
+      const response = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=100${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -358,17 +388,19 @@ async function startServer() {
     const token = await getValidGmailToken();
     if (!token) return res.status(401).json({ error: 'Gmail not connected' });
 
-    const { to, subject, body } = req.body;
+    const { to, cc, bcc, subject, body } = req.body;
 
     // Create email content
     const emailContent = [
       `To: ${to}`,
-      'Content-Type: text/plain; charset=utf-8',
+      cc ? `Cc: ${cc}` : '',
+      bcc ? `Bcc: ${bcc}` : '',
+      'Content-Type: text/html; charset=utf-8',
       'MIME-Version: 1.0',
       `Subject: ${subject}`,
       '',
       body
-    ].join('\n');
+    ].filter(line => line !== '').join('\n');
 
     const encodedEmail = Buffer.from(emailContent).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
@@ -507,6 +539,7 @@ async function startServer() {
 
       const targetPath = req.originalUrl.replace('/api/nowcerts', '');
       const targetUrl = `https://api.nowcerts.com${targetPath}`;
+      console.log(`[Proxy] targetUrl: ${targetUrl}`);
       
       const fetchOptions: RequestInit = {
         method: req.method,
@@ -542,6 +575,14 @@ async function startServer() {
       }
 
       const data = await response.text();
+      const logLine = `[Proxy] targetUrl: ${targetUrl}, Response status: ${response.status}, length: ${data.length}\n`;
+      console.log(logLine);
+      try {
+          fs.appendFileSync('proxy-debug.log', logLine);
+          if (targetUrl.includes('PolicyDetailList') || targetUrl.includes('InsuredList')) {
+              fs.appendFileSync('proxy-debug.log', `[Proxy] Response snippet: ${data.substring(0, 200)}\n`);
+          }
+      } catch (e) {}
       res.status(response.status).send(data);
 
     } catch (error: any) {

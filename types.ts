@@ -158,6 +158,15 @@ export interface UnderwritingData {
   isMobileHome: boolean;
   hasAttic: boolean;
   sqft?: number;
+  humanSummary?: string;
+  stories?: number;
+  propertyType?: string;
+  numberOfBedrooms?: number;
+  hasMultipleKitchens?: boolean;
+  hasAccessoryDwellingUnit?: boolean;
+  detachedStructureTypes?: string[];
+  hasDecksOrPorches?: boolean;
+  hasSolarPanels?: boolean;
 }
 
 export interface AIAnalysisResult {
@@ -182,6 +191,14 @@ export interface AIAnalysisResult {
   };
   inspectorNotes: string;
   detailedSummary: string;
+  identifiedFeatures?: {
+    constructionAndFinishes?: string[];
+    systemsAndEquipment?: string[];
+    safetyFeatures?: string[];
+    hazardsAndRedFlags?: string[];
+    underwritingContents?: string[];
+  };
+  followUpQuestions?: string[];
 }
 
 export interface PhotoRequirement {

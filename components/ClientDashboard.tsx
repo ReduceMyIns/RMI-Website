@@ -28,13 +28,25 @@ const SERVICES = [
 
 const isPolicyActive = (p: any) => {
     if (p.isQuote) return false;
-    if (p.status) {
-        const status = p.status.toString().toLowerCase();
+    
+    // Check status string if available
+    if (p.status || p.Status) {
+        const status = (p.status || p.Status).toString().toLowerCase();
         if (status.includes('cancel') || status.includes('expire') || status.includes('non-renew')) {
             return false;
         }
+        if (status.includes('active') || status.includes('in force') || status.includes('bound')) {
+            return true;
+        }
     }
-    return !!p.active;
+    
+    // Check active boolean flags
+    if (p.active !== undefined) return !!p.active;
+    if (p.isActive !== undefined) return !!p.isActive;
+    if (p.IsActive !== undefined) return !!p.IsActive;
+
+    // Default to true if we can't determine, so they show up somewhere
+    return true;
 };
 
 // ... (StatCard, CoverageItem components remain same) ...
@@ -500,6 +512,7 @@ const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'ACTIVE' | 'QUOTES' | 'HISTORY' | 'COMMUNICATIONS'>('ACTIVE');
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
@@ -538,7 +551,15 @@ const ClientDashboard: React.FC = () => {
     try {
       // 1. Load NowCerts Policies
       const data = await nowCertsApi.getPolicies(u);
-      setPolicies(data.value || []);
+      console.log("Fetched policies:", data.value);
+      
+      const fetchedPolicies = data.value || [];
+      const activeCount = fetchedPolicies.filter((p: any) => !p.isQuote && isPolicyActive(p)).length;
+      const quoteCount = fetchedPolicies.filter((p: any) => p.isQuote).length;
+      const historyCount = fetchedPolicies.filter((p: any) => !isPolicyActive(p) && !p.isQuote).length;
+      
+      setDebugInfo(`Fetched: ${fetchedPolicies.length}. Active: ${activeCount}. Quotes: ${quoteCount}. History: ${historyCount}. Statuses: ${fetchedPolicies.map((p: any) => p.status).join(', ')}`);
+      setPolicies(fetchedPolicies);
 
       // 2. Load Firestore Lead/Quote Status
       const lead = await dbService.findExistingLead(u.email || u.eMail, u.phone || u.cellPhone);
@@ -639,7 +660,8 @@ const ClientDashboard: React.FC = () => {
   );
 
   return (
-    <div className="space-y-12 pb-24 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+      <div className="space-y-12 pb-24 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+      {debugInfo && <div className="bg-red-500/20 border border-red-500 text-white p-4 rounded-xl text-xs font-mono">{debugInfo}</div>}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10">
         <div className="space-y-3">
           <button onClick={() => window.dispatchEvent(new CustomEvent('edit-profile'))} className="flex items-center gap-3 text-blue-400 text-[10px] font-bold uppercase tracking-[0.3em] hover:text-white transition-colors group">
