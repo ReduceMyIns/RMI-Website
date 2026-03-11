@@ -7,5 +7,4 @@ dist
 .dockerignore
 Carrier Logos
 *.md
-scripts
 public/sitemap.xml
