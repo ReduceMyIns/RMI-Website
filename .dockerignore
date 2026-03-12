@@ -5,6 +5,6 @@ dist
 .git
 .gitignore
 .dockerignore
-Carrier Logos
+/Carrier Logos
 *.md
 public/sitemap.xml

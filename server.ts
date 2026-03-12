@@ -608,7 +608,14 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // In production, serve static files from dist
-    app.use(express.static(path.join(__dirname, "dist")));
+    // Include .jfif MIME type since it's not in the default mime database
+    app.use(express.static(path.join(__dirname, "dist"), {
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.jfif')) {
+          res.setHeader('Content-Type', 'image/jpeg');
+        }
+      }
+    }));
     app.get("*", (req, res) => {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
