@@ -609,6 +609,9 @@ async function startServer() {
   } else {
     // In production, serve static files from dist
     // Include .jfif MIME type since it's not in the default mime database
+    const logoDir = path.join(__dirname, 'dist', 'carrier-logos');
+    const logoCount = fs.existsSync(logoDir) ? fs.readdirSync(logoDir).length : 0;
+    console.log(`[Static] dist/carrier-logos: ${logoCount} files present`);
     app.use(express.static(path.join(__dirname, "dist"), {
       setHeaders(res, filePath) {
         if (filePath.endsWith('.jfif')) {
