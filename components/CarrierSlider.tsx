@@ -4,18 +4,18 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 const carriers = [
-  { name: 'Progressive', src: '/Carrier Logos/Progressive Mobile.png', slug: 'progressive' },
-  { name: 'Travelers', src: '/Carrier Logos/Travelers Mobile.jpg', slug: 'travelers' },
-  { name: 'Nationwide', src: '/Carrier Logos/Nationwide Mobile.jpg', slug: 'nationwide' },
-  { name: 'Liberty Mutual', src: '/Carrier Logos/Liberty Mutual.jpg', slug: 'liberty-mutual' },
-  { name: 'The Hartford', src: '/Carrier Logos/The Hartford.png', slug: 'the-hartford' },
-  { name: 'SafeCo', src: '/Carrier Logos/SafeCo Mobile.jpg', slug: 'safeco' },
-  { name: 'Hiscox', src: '/Carrier Logos/Hiscox.png', slug: 'hiscox' },
-  { name: 'Openly', src: '/Carrier Logos/Openly transparent logo.png', slug: 'openly' },
-  { name: 'Geico', src: '/Carrier Logos/geico-logo.png', slug: 'geico' },
-  { name: 'Next', src: '/Carrier Logos/Next Insurance.png', slug: 'next-insurance' },
-  { name: 'Encompass', src: '/Carrier Logos/Encompass.png', slug: 'encompass' },
-  { name: 'Employers', src: '/Carrier Logos/Employers.png', slug: 'employers' },
+  { name: 'Progressive', src: '/carrier-logos/Progressive-Mobile.png', slug: 'progressive' },
+  { name: 'Travelers', src: '/carrier-logos/Travelers-Mobile.jpg', slug: 'travelers' },
+  { name: 'Nationwide', src: '/carrier-logos/Nationwide-Mobile.jpg', slug: 'nationwide' },
+  { name: 'Liberty Mutual', src: '/carrier-logos/Liberty-Mutual.jpg', slug: 'liberty-mutual' },
+  { name: 'The Hartford', src: '/carrier-logos/The-Hartford.png', slug: 'the-hartford' },
+  { name: 'SafeCo', src: '/carrier-logos/SafeCo-Mobile.jpg', slug: 'safeco' },
+  { name: 'Hiscox', src: '/carrier-logos/Hiscox.png', slug: 'hiscox' },
+  { name: 'Openly', src: '/carrier-logos/Openly-transparent-logo.png', slug: 'openly' },
+  { name: 'Geico', src: '/carrier-logos/geico-logo.png', slug: 'geico' },
+  { name: 'Next', src: '/carrier-logos/Next-Insurance.png', slug: 'next-insurance' },
+  { name: 'Encompass', src: '/carrier-logos/Encompass.png', slug: 'encompass' },
+  { name: 'Employers', src: '/carrier-logos/Employers.png', slug: 'employers' },
 ];
 
 const CarrierSlider: React.FC = () => {
