@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Phone, Globe, Mail, MapPin, Shield,
@@ -8,34 +8,13 @@ import {
 } from 'lucide-react';
 import SEOHead from './SEOHead';
 
-// ─── Openly Zendesk chat widget ───────────────────────────────────────────────
-const ZENDESK_SCRIPT_ID = 'openly-ze-snippet';
-const ZENDESK_KEY = 'a71d0788-5615-49b5-83f7-69387bb904ef';
-
-function loadOpenlyChat() {
-  if (document.getElementById(ZENDESK_SCRIPT_ID)) return; // already loaded
-  const s = document.createElement('script');
-  s.id = ZENDESK_SCRIPT_ID;
-  s.src = `https://static.zdassets.com/ekr/snippet.js?key=${ZENDESK_KEY}`;
-  s.async = true;
-  document.body.appendChild(s);
-}
-
 function openOpenlyChat() {
-  const zE = (window as any).zE;
-  if (zE) {
-    // Try both the classic Web Widget and the newer Messaging API
-    try { zE('messenger', 'open'); } catch { zE('webWidget', 'open'); }
-  } else {
-    // Widget not loaded yet — open Openly's contact page as fallback
-    window.open('https://openly.com/contact-us', '_blank', 'noopener');
-  }
+  window.open('https://openly.com/contact-us', '_blank', 'noopener');
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 const carrier = {
   name: 'Openly',
-  logo: '/Openly transparent logo.png',
+  logo: '/carrier-logos/Openly-transparent-logo.png',
   phone: '857-990-9080',
   serviceLevel: 'Full Service',
   loginUrl: 'https://bit.ly/3vzLWBR',
@@ -54,10 +33,6 @@ const carrier = {
 };
 
 const OpenlyCarrierPage: React.FC = () => {
-  useEffect(() => {
-    loadOpenlyChat();
-  }, []);
-
   return (
     <div className="max-w-6xl mx-auto py-12 px-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
       <SEOHead

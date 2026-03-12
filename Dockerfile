@@ -24,6 +24,8 @@ RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy the Vite-built frontend from builder
 COPY --from=builder /app/dist ./dist
+# Explicitly copy carrier logos — Vite's public-dir copy is unreliable in Cloud Build
+COPY --from=builder /app/public/carrier-logos ./dist/carrier-logos
 
 # Copy all server-side source files
 COPY server.ts .
