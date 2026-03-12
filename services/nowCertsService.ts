@@ -358,74 +358,64 @@ export const nowCertsApi = {
           ?? (p.lineOfBusiness ? [{ lineOfBusinessName: p.lineOfBusiness }] : [])
     }));
 
-    // Check if user object has pre-loaded policies (e.g. from mock or previous fetch)
     if (user.policies && Array.isArray(user.policies) && user.policies.length > 0) {
       return { value: normalizePolicies(user.policies) };
     }
 
     try {
       const token = await this.getAccessToken();
-      let insuredId = user.insuredDatabaseId || user.databaseId || user.id;
-      const isGuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-
       const endpoint = APP_CONFIG.apis.nowCerts.endpoints.policyList || "/api/PolicyDetailList";
 
-      // Always try to find the insured by email first to catch all policies across duplicate records
       const email = user.eMail || user.email || '';
-      if (email) {
-          const searchResult = await this.searchInsured({ email });
-          if (searchResult && searchResult.value && searchResult.value.length > 0) {
-              // Try to find policies for all matching insureds
-              let allPolicies: any[] = [];
-              for (const insured of searchResult.value) {
-                  const id = insured.databaseId || insured.id;
-                  if (!id) continue;
-                  const query = `$filter=insuredDatabaseId eq ${id}&$top=100&$skip=0&$orderby=effectiveDate desc`;
-                  const url = `${BASE_URL}${endpoint}?${encodeURI(query)}`;
-                  const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                      'Accept': 'application/json',
-                      'Authorization': `Bearer ${token}`
-                    },
-                    cache: 'no-store'
-                  });
-                  if (response.ok) {
-                      const data = await response.json();
-                      if (data && data.value && Array.isArray(data.value)) {
-                          allPolicies = allPolicies.concat(data.value);
-                      }
-                  }
-              }
+      const rawPhone = (user.phone || user.cellPhone || user.smsPhone || '').replace(/\D/g, '');
+      const formattedPhone = rawPhone.length === 10
+        ? `${rawPhone.slice(0, 3)}-${rawPhone.slice(3, 6)}-${rawPhone.slice(6)}`
+        : rawPhone;
 
-              if (allPolicies.length > 0) {
-                  return { value: normalizePolicies(allPolicies) };
-              }
+      // Step 1: Query PolicyDetailList directly by email/phone (no two-step InsuredList lookup)
+      const filterParts: string[] = [];
+      if (email) filterParts.push(`contains(insuredEmail, '${email}')`);
+      if (formattedPhone) {
+        filterParts.push(`contains(insuredPhoneNumber, '${formattedPhone}')`);
+        filterParts.push(`contains(insuredCellPhone, '${formattedPhone}')`);
+        filterParts.push(`contains(insuredSMSPhone, '${formattedPhone}')`);
+      }
+
+      if (filterParts.length > 0) {
+        const filter = `$filter=${filterParts.join(' or ')}&$orderby=effectiveDate desc`;
+        const url = `${BASE_URL}${endpoint}?${encodeURI(filter)}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.value?.length > 0) {
+            return { value: normalizePolicies(data.value) };
           }
+        }
       }
 
-      // Fallback to insuredId if email search didn't yield policies or email is missing
-      if (!insuredId || insuredId === "SIM-FORCE-01" || !isGuid(insuredId)) {
-          console.warn("getPolicies: No valid user ID or email to fetch policies.");
-          return { value: [] };
+      // Step 2: Fallback — direct insuredDatabaseId lookup
+      const insuredId = user.insuredDatabaseId || user.databaseId || user.id;
+      const isGuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (!insuredId || !isGuid(insuredId)) {
+        console.warn("getPolicies: No policies found via email/phone and no valid insuredDatabaseId.");
+        return { value: [] };
       }
 
-      const query = `$filter=insuredDatabaseId eq ${insuredId}&$top=100&$skip=0&$orderby=effectiveDate desc`;
+      const query = `$filter=insuredDatabaseId eq ${insuredId}&$top=100&$orderby=effectiveDate desc`;
       const url = `${BASE_URL}${endpoint}?${encodeURI(query)}`;
-
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
         cache: 'no-store'
       });
-
       if (!response.ok) {
-         const errText = await response.text();
-         console.warn(`getPolicies failed with status: ${response.status}, text: ${errText}`);
-         return { value: [] };
+        const errText = await response.text();
+        console.warn(`getPolicies fallback failed: ${response.status} ${errText}`);
+        return { value: [] };
       }
       const data = await response.json();
       return { value: normalizePolicies(data.value ?? []) };
