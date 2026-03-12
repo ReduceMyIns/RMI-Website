@@ -18,7 +18,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "progressive",
     name: "Progressive",
-    logo: "/Progressive Mobile.png",
+    logo: "/Carrier Logos/Progressive Mobile.png",
     phone: "800-876-5581",
     serviceLevel: "Full Service",
     loginUrl: "https://account.apps.progressive.com/access/login",
@@ -50,7 +50,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "nationwide",
     name: "Nationwide",
-    logo: "/Nationwide Mobile.jpg",
+    logo: "/Carrier Logos/Nationwide Mobile.jpg",
     phone: "800-282-1446",
     serviceLevel: "Full Service",
     loginUrl: "https://www.nationwide.com/personal/login",
@@ -66,7 +66,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "travelers",
     name: "Travelers",
-    logo: "/Travelers Mobile.jpg",
+    logo: "/Carrier Logos/Travelers Mobile.jpg",
     phone: "877-872-8737",
     serviceLevel: "Full Service",
     loginUrl: "https://www.travelers.com/login/#/",
@@ -82,7 +82,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "liberty-mutual",
     name: "Liberty Mutual",
-    logo: "/Liberty Mutual.jpg",
+    logo: "/Carrier Logos/Liberty Mutual.jpg",
     phone: "877-538-1920",
     serviceLevel: "Full Service",
     loginUrl: "https://www.mybusinessonline.libertymutual.com/",
@@ -105,7 +105,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hiscox",
     name: "Hiscox",
-    logo: "/Hiscox.png",
+    logo: "/Carrier Logos/Hiscox.png",
     phone: "866-283-7545",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/HiscoxOnline",
@@ -116,7 +116,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "safeco",
     name: "SafeCo",
-    logo: "/SafeCo Mobile.jpg",
+    logo: "/Carrier Logos/SafeCo Mobile.jpg",
     phone: "866-472-3326",
     serviceLevel: "Full Service",
     loginUrl: "https://customer.safeco.com/accountmanager/homepage",
@@ -132,7 +132,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "state-auto",
     name: "State Auto",
-    logo: "/State Auto Mobile.png",
+    logo: "/Carrier Logos/State Auto Mobile.png",
     phone: "800-288-4425",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://empidn.stateauto.com/WebIdPForms/Login/Portal",
@@ -148,7 +148,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "next-insurance",
     name: "Next Insurance",
-    logo: "/Next Insurance.png",
+    logo: "/Carrier Logos/Next Insurance.png",
     phone: "855-222-5919",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/NEXTportal",
@@ -188,7 +188,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "pie-insurance",
     name: "Pie Insurance",
-    logo: "/Pie.png",
+    logo: "/Carrier Logos/Pie.png",
     phone: "855-275-9884",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://partner.pieinsurance.com/sign-in",
@@ -199,7 +199,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "thimble",
     name: "Thimble",
-    logo: "/Thimble Agent.jpg",
+    logo: "/Carrier Logos/Thimble Agent.jpg",
     phone: "855-940-4525",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/ThimbleOnline",
@@ -215,7 +215,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "foremost",
     name: "Foremost",
-    logo: "/Foremost Agent.jpg",
+    logo: "/Carrier Logos/Foremost Agent.jpg",
     phone: "800-527-3905",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/ForemostLogin",
@@ -243,7 +243,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hagerty",
     name: "Hagerty",
-    logo: "/Hagerty.jpg",
+    logo: "/Carrier Logos/Hagerty.jpg",
     phone: "877-922-9701",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/HagertyLogin",
@@ -254,7 +254,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "lemonade",
     name: "Lemonade",
-    logo: "/Lemonade Agent.png",
+    logo: "/Carrier Logos/Lemonade Agent.png",
     phone: "844-733-8666",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/LemonadeOnline",
@@ -269,7 +269,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "openly",
     name: "Openly",
-    logo: "/Openly transparent logo.png",
+    logo: "/Carrier Logos/Openly transparent logo.png",
     phone: "857-990-9080",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3vzLWBR",
@@ -297,7 +297,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hippo",
     name: "Hippo",
-    logo: "/Hippo Agent.jpg",
+    logo: "/Carrier Logos/Hippo Agent.jpg",
     phone: "800-585-0705",
     serviceLevel: "Full Service",
     loginUrl: "https://my.hippo.com/login",
@@ -341,7 +341,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "employers",
     name: "Employers",
-    logo: "/Employers.png",
+    logo: "/Carrier Logos/Employers.png",
     phone: "888-682-6671",
     serviceLevel: "Agency Serviced",
     products: ["Worker's Compensation"],
@@ -351,7 +351,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "encompass",
     name: "Encompass",
-    logo: "/Encompass.png",
+    logo: "/Carrier Logos/Encompass.png",
     phone: "800-897-9678",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/RIMEncompass",
@@ -362,7 +362,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "grange",
     name: "Grange",
-    logo: "/Grange Agent.jpg",
+    logo: "/Carrier Logos/Grange Agent.jpg",
     phone: "855-299-2040",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/GrangeLogin",
@@ -373,7 +373,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "guard",
     name: "Guard",
-    logo: "/GUARD Agent.png",
+    logo: "/Carrier Logos/GUARD Agent.png",
     phone: "800-969-5454",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3psJqfJ",
@@ -384,7 +384,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "kemper",
     name: "Kemper",
-    logo: "/Kemper mobile logo.png",
+    logo: "/Carrier Logos/Kemper mobile logo.png",
     phone: "800-327-1500",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3vD7zkH",
@@ -395,7 +395,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "markel",
     name: "Markel",
-    logo: "/Markel Firstcomp Agent.jpg",
+    logo: "/Carrier Logos/Markel Firstcomp Agent.jpg",
     phone: "888-500-3344",
     serviceLevel: "Full Service",
     loginUrl: "https://account.markel.com/",
@@ -406,7 +406,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "mercury",
     name: "Mercury",
-    logo: "/Mercury.png",
+    logo: "/Carrier Logos/Mercury.png",
     phone: "866-539-2075",
     serviceLevel: "Full Service",
     products: ["Personal Auto", "Homeowners", "Business Owners"],
@@ -416,7 +416,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "metlife",
     name: "MetLife",
-    logo: "/Metlife Logo.jfif",
+    logo: "/Carrier Logos/Metlife Logo.jfif",
     phone: "800-422-4272",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/2Zd9Uap",
@@ -427,7 +427,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "national-general",
     name: "National General",
-    logo: "/National General.jpg",
+    logo: "/Carrier Logos/National General.jpg",
     phone: "877-468-3466",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3E3rhsY",
@@ -438,7 +438,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "stillwater",
     name: "Stillwater",
-    logo: "/Stillwater.png",
+    logo: "/Carrier Logos/Stillwater.png",
     phone: "855-712-4092",
     serviceLevel: "Full Service",
     loginUrl: "https://stillwaterinsurance.com/SalesPortal/login",
@@ -449,7 +449,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "the-general",
     name: "The General",
-    logo: "/The General Mobile.png",
+    logo: "/Carrier Logos/The General Mobile.png",
     phone: "800-280-1466",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3niYzgK",
@@ -460,7 +460,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "trexis",
     name: "Trexis",
-    logo: "/Trexis Mobile.png",
+    logo: "/Carrier Logos/Trexis Mobile.png",
     phone: "877-384-7466",
     serviceLevel: "Partial Service",
     loginUrl: "https://trexis.com/",
@@ -471,7 +471,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "the-hartford",
     name: "The Hartford",
-    logo: "/The Hartford.png",
+    logo: "/Carrier Logos/The Hartford.png",
     phone: "800-624-5578",
     serviceLevel: "Full Service",
     loginUrl: "https://www.thehartford.com/login",
@@ -481,7 +481,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "geico",
     name: "Geico",
-    logo: "/geico-logo.png",
+    logo: "/Carrier Logos/geico-logo.png",
     phone: "800-207-7847",
     serviceLevel: "Full Service",
     loginUrl: "https://www.geico.com/login/",
@@ -491,7 +491,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "usli",
     name: "USLI",
-    logo: "/USLI Agent.png",
+    logo: "/Carrier Logos/USLI Agent.png",
     phone: "800-523-5545",
     serviceLevel: "Partial Service",
     loginUrl: "https://bit.ly/3jrn9ep",

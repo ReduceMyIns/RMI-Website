@@ -15,7 +15,7 @@ export interface ServiceCarrier {
 export const SERVICE_CARRIERS: ServiceCarrier[] = [
   { 
     name: "Progressive", 
-    logo: "/Progressive Mobile.png",
+    logo: "/Carrier Logos/Progressive Mobile.png",
     serviceLevel: "Full Service", 
     types: ['Personal', 'Commercial'], 
     phone: "800-876-5581", 
@@ -37,7 +37,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Nationwide", 
-    logo: "/Nationwide Mobile.jpg",
+    logo: "/Carrier Logos/Nationwide Mobile.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal', 'Commercial'], 
     phone: "800-282-1446", 
@@ -48,7 +48,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Travelers", 
-    logo: "/Travelers Mobile.jpg",
+    logo: "/Carrier Logos/Travelers Mobile.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal', 'Commercial'], 
     phone: "877-872-8737", 
@@ -59,7 +59,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Liberty Mutual", 
-    logo: "/Liberty Mutual.jpg",
+    logo: "/Carrier Logos/Liberty Mutual.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal', 'Commercial'], 
     phone: "877-538-1920", 
@@ -68,7 +68,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Safeco", 
-    logo: "/SafeCo Mobile.jpg",
+    logo: "/Carrier Logos/SafeCo Mobile.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal'], 
     phone: "866-472-3326", 
@@ -79,7 +79,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "State Auto", 
-    logo: "/State Auto Mobile.png",
+    logo: "/Carrier Logos/State Auto Mobile.png",
     serviceLevel: "Billing & Claim Service", 
     types: ['Personal', 'Commercial'], 
     phone: "800-288-4425", 
@@ -90,7 +90,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Foremost", 
-    logo: "/Foremost Agent.jpg",
+    logo: "/Carrier Logos/Foremost Agent.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal'], 
     phone: "800-527-3905", 
@@ -110,7 +110,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Hagerty", 
-    logo: "/Hagerty.jpg",
+    logo: "/Carrier Logos/Hagerty.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal'], 
     phone: "877-922-9701", 
@@ -128,7 +128,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Next Insurance", 
-    logo: "/Next Insurance.png",
+    logo: "/Carrier Logos/Next Insurance.png",
     serviceLevel: "Full Service", 
     types: ['Commercial'], 
     phone: "855-222-5919", 
@@ -139,7 +139,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Pie Insurance", 
-    logo: "/Pie.png",
+    logo: "/Carrier Logos/Pie.png",
     serviceLevel: "Billing & Claim Service", 
     types: ['Commercial'], 
     phone: "855-275-9884", 
@@ -157,7 +157,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Lemonade", 
-    logo: "/Lemonade Agent.png",
+    logo: "/Carrier Logos/Lemonade Agent.png",
     serviceLevel: "Full Service", 
     types: ['Personal'], 
     phone: "844-733-8666", 
@@ -168,7 +168,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Hippo", 
-    logo: "/Hippo Agent.jpg",
+    logo: "/Carrier Logos/Hippo Agent.jpg",
     serviceLevel: "Full Service", 
     types: ['Personal'], 
     phone: "800-585-0705", 
@@ -188,7 +188,7 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
   },
   { 
     name: "Openly", 
-    logo: "/Openly transparent logo.png",
+    logo: "/Carrier Logos/Openly transparent logo.png",
     serviceLevel: "Full Service", 
     types: ['Personal'], 
     phone: "857-990-9080", 
@@ -207,35 +207,35 @@ export const SERVICE_CARRIERS: ServiceCarrier[] = [
     email: "support@coterieinsurance.com" 
   },
   { name: "Dairyland", logo: "/Carrier Logos/Dairyland Logo.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-334-0090", loginUrl: "https://bit.ly/3joUiqO", email: "help@dairylandinsurance.com" },
-  { name: "Employers", logo: "/Employers.png", serviceLevel: "Agency Serviced", types: ['Commercial'], phone: "888-682-6671", email: "customersupport@employers.com" },
-  { name: "Encompass", logo: "/Encompass.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-897-9678", loginUrl: "https://bit.ly/RIMEncompass", email: "Service@encompassins.com" },
-  { name: "Grange", logo: "/Grange Agent.jpg", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "855-299-2040", loginUrl: "https://bit.ly/GrangeLogin", androidApp: "https://play.google.com/store/apps/details?id=com.GrangeInsurance.Mobileapp", iosApp: "https://apps.apple.com/us/app/grange-mobile/id1202329486", email: "mypolicy@grangeinsurance.com" },
-  { name: "Guard", logo: "/GUARD Agent.png", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "800-969-5454", loginUrl: "https://bit.ly/3psJqfJ", email: "servicecenter@guard.com" },
+  { name: "Employers", logo: "/Carrier Logos/Employers.png", serviceLevel: "Agency Serviced", types: ['Commercial'], phone: "888-682-6671", email: "customersupport@employers.com" },
+  { name: "Encompass", logo: "/Carrier Logos/Encompass.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-897-9678", loginUrl: "https://bit.ly/RIMEncompass", email: "Service@encompassins.com" },
+  { name: "Grange", logo: "/Carrier Logos/Grange Agent.jpg", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "855-299-2040", loginUrl: "https://bit.ly/GrangeLogin", androidApp: "https://play.google.com/store/apps/details?id=com.GrangeInsurance.Mobileapp", iosApp: "https://apps.apple.com/us/app/grange-mobile/id1202329486", email: "mypolicy@grangeinsurance.com" },
+  { name: "Guard", logo: "/Carrier Logos/GUARD Agent.png", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "800-969-5454", loginUrl: "https://bit.ly/3psJqfJ", email: "servicecenter@guard.com" },
   { 
     name: "Hiscox", 
-    logo: "/Hiscox.png",
+    logo: "/Carrier Logos/Hiscox.png",
     serviceLevel: "Full Service", 
     types: ['Commercial'], 
     phone: "866-283-7545", 
     loginUrl: "https://bit.ly/HiscoxOnline", 
     email: "agencyusa@hiscox.com" 
   },
-  { name: "Kemper", logo: "/Kemper mobile logo.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-327-1500", loginUrl: "https://bit.ly/3vD7zkH", email: "specialtyservice@kemper.com" },
-  { name: "Markel", logo: "/Markel Firstcomp Agent.jpg", serviceLevel: "Full Service", types: ['Commercial'], phone: "888-500-3344", loginUrl: "https://account.markel.com/", email: "customerservice2@markel.com" },
-  { name: "Mercury", logo: "/Mercury.png", serviceLevel: "Full Service", types: ['Personal'], phone: "866-539-2075", email: "service@mercuryinsurance.com" },
-  { name: "MetLife", logo: "/Metlife Logo.jfif", serviceLevel: "Full Service", types: ['Personal'], phone: "800-422-4272", loginUrl: "https://bit.ly/2Zd9Uap", email: "policyupdate@metlife.com" },
-  { name: "National General", logo: "/National General.jpg", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "877-468-3466", loginUrl: "https://bit.ly/3E3rhsY", email: "service@ngic.com" },
-  { name: "Stillwater", logo: "/Stillwater.png", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "855-712-4092", loginUrl: "https://stillwaterinsurance.com/SalesPortal/login", email: "ins@stillwater.com" },
-  { name: "The General", logo: "/The General Mobile.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-280-1466", loginUrl: "https://bit.ly/3niYzgK", email: "customersupport@thegeneral.com" },
+  { name: "Kemper", logo: "/Carrier Logos/Kemper mobile logo.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-327-1500", loginUrl: "https://bit.ly/3vD7zkH", email: "specialtyservice@kemper.com" },
+  { name: "Markel", logo: "/Carrier Logos/Markel Firstcomp Agent.jpg", serviceLevel: "Full Service", types: ['Commercial'], phone: "888-500-3344", loginUrl: "https://account.markel.com/", email: "customerservice2@markel.com" },
+  { name: "Mercury", logo: "/Carrier Logos/Mercury.png", serviceLevel: "Full Service", types: ['Personal'], phone: "866-539-2075", email: "service@mercuryinsurance.com" },
+  { name: "MetLife", logo: "/Carrier Logos/Metlife Logo.jfif", serviceLevel: "Full Service", types: ['Personal'], phone: "800-422-4272", loginUrl: "https://bit.ly/2Zd9Uap", email: "policyupdate@metlife.com" },
+  { name: "National General", logo: "/Carrier Logos/National General.jpg", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "877-468-3466", loginUrl: "https://bit.ly/3E3rhsY", email: "service@ngic.com" },
+  { name: "Stillwater", logo: "/Carrier Logos/Stillwater.png", serviceLevel: "Full Service", types: ['Personal', 'Commercial'], phone: "855-712-4092", loginUrl: "https://stillwaterinsurance.com/SalesPortal/login", email: "ins@stillwater.com" },
+  { name: "The General", logo: "/Carrier Logos/The General Mobile.png", serviceLevel: "Full Service", types: ['Personal'], phone: "800-280-1466", loginUrl: "https://bit.ly/3niYzgK", email: "customersupport@thegeneral.com" },
   { 
     name: "Thimble", 
-    logo: "/Thimble Agent.jpg",
+    logo: "/Carrier Logos/Thimble Agent.jpg",
     serviceLevel: "Full Service", 
     types: ['Commercial'], 
     phone: "855-940-4525", 
     loginUrl: "https://bit.ly/ThimbleOnline", 
     email: "broker@thimbel.com" 
   },
-  { name: "Trexis", logo: "/Trexis Mobile.png", serviceLevel: "Partial Service", types: ['Personal'], phone: "877-384-7466", loginUrl: "https://trexis.com/", email: "customerservice@trexis.com" },
-  { name: "USLI", logo: "/USLI Agent.png", serviceLevel: "Partial Service", types: ['Commercial'], phone: "800-523-5545", loginUrl: "https://bit.ly/3jrn9ep", email: "support@usli.com" }
+  { name: "Trexis", logo: "/Carrier Logos/Trexis Mobile.png", serviceLevel: "Partial Service", types: ['Personal'], phone: "877-384-7466", loginUrl: "https://trexis.com/", email: "customerservice@trexis.com" },
+  { name: "USLI", logo: "/Carrier Logos/USLI Agent.png", serviceLevel: "Partial Service", types: ['Commercial'], phone: "800-523-5545", loginUrl: "https://bit.ly/3jrn9ep", email: "support@usli.com" }
 ];
