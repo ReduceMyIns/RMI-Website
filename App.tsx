@@ -292,7 +292,7 @@ const PageRoutes: React.FC<{ user: any; setShowProfileEdit: (show: boolean) => v
             path="/dashboard" 
             element={
               <ProtectedRoute user={user}>
-                <ClientDashboard />
+                <ClientDashboard user={user} />
               </ProtectedRoute>
             } 
           />
