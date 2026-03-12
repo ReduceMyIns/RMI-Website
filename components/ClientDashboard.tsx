@@ -508,7 +508,7 @@ const PolicyDetailModal: React.FC<{ policy: any; onClose: () => void }> = ({ pol
     );
 };
 
-const ClientDashboard: React.FC = () => {
+const ClientDashboard: React.FC<{ user?: any }> = ({ user: userProp }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
@@ -527,24 +527,23 @@ const ClientDashboard: React.FC = () => {
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('rmi_user');
-    if (saved) {
-      const u = JSON.parse(saved);
+    // Use App's user state (passed as prop) — immune to sessionStorage race condition.
+    // Fall back to sessionStorage for dev bypass / edge cases.
+    const u = userProp ?? JSON.parse(sessionStorage.getItem('rmi_user') || 'null');
+    if (u) {
       setUser(u);
-      
       // Auto-set session for AI tools access
       sessionStorage.setItem('rmi_tool_user', JSON.stringify({
-          firstName: u.firstName,
-          lastName: u.lastName,
-          email: u.email || u.eMail,
-          phone: u.phone || u.cellPhone
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email || u.eMail,
+        phone: u.phone || u.cellPhone
       }));
-      
       loadData(u);
-    } else {
-        setIsLoading(false); // No user, show empty or redirect
+      // isLoading stays true until loadData's finally block — spinner shows during fetch
     }
-  }, []);
+    // No else: ProtectedRoute only renders this component when user is non-null
+  }, [userProp]);
 
   const loadData = async (u: any) => {
     try {
