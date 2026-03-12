@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
 
+# Block auth-walled and internal routes from crawling
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /compliance
+Disallow: /tools
+Disallow: /agent/academy
+Disallow: /kickoff
+Disallow: /knowledge
+
 Sitemap: https://www.reducemyinsurance.net/sitemap.xml
