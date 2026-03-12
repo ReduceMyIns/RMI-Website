@@ -616,6 +616,16 @@ async function startServer() {
         }
       }
     }));
+    // Explicitly serve sitemap and robots so Googlebot always gets valid XML/text
+    // even if the SPA catch-all would otherwise intercept these paths
+    app.get('/sitemap.xml', (req, res) => {
+      res.setHeader('Content-Type', 'text/xml; charset=utf-8');
+      res.sendFile(path.join(__dirname, 'dist', 'sitemap.xml'));
+    });
+    app.get('/robots.txt', (req, res) => {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.sendFile(path.join(__dirname, 'dist', 'robots.txt'));
+    });
     app.get("*", (req, res) => {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
