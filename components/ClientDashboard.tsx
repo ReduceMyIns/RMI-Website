@@ -512,7 +512,6 @@ const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
-  const [debugInfo, setDebugInfo] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'ACTIVE' | 'QUOTES' | 'HISTORY' | 'COMMUNICATIONS'>('ACTIVE');
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
@@ -558,7 +557,6 @@ const ClientDashboard: React.FC = () => {
       const quoteCount = fetchedPolicies.filter((p: any) => p.isQuote).length;
       const historyCount = fetchedPolicies.filter((p: any) => !isPolicyActive(p) && !p.isQuote).length;
       
-      setDebugInfo(`Fetched: ${fetchedPolicies.length}. Active: ${activeCount}. Quotes: ${quoteCount}. History: ${historyCount}. Statuses: ${fetchedPolicies.map((p: any) => p.status).join(', ')}`);
       setPolicies(fetchedPolicies);
 
       // 2. Load Firestore Lead/Quote Status
@@ -661,8 +659,7 @@ const ClientDashboard: React.FC = () => {
 
   return (
       <div className="space-y-12 pb-24 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-      {debugInfo && <div className="bg-red-500/20 border border-red-500 text-white p-4 rounded-xl text-xs font-mono">{debugInfo}</div>}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10">
+<div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10">
         <div className="space-y-3">
           <button onClick={() => window.dispatchEvent(new CustomEvent('edit-profile'))} className="flex items-center gap-3 text-blue-400 text-[10px] font-bold uppercase tracking-[0.3em] hover:text-white transition-colors group">
              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
