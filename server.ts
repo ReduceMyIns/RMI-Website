@@ -37,6 +37,19 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  app.get("/api/debug/logos", (req, res) => {
+    const checks = [
+      path.join(__dirname, 'public', 'carrier-logos'),
+      path.join(__dirname, 'dist', 'carrier-logos'),
+    ];
+    const result: Record<string, any> = { __dirname, NODE_ENV: process.env.NODE_ENV };
+    for (const dir of checks) {
+      const exists = fs.existsSync(dir);
+      result[dir] = exists ? fs.readdirSync(dir).length + ' files' : 'MISSING';
+    }
+    res.json(result);
+  });
+
   app.post("/api/log", (req, res) => {
     try {
       // Use /tmp for logs in serverless environments
