@@ -18,7 +18,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "progressive",
     name: "Progressive",
-    logo: "/carrier-logos/Progressive-Mobile.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Progressive-Mobile.png",
     phone: "800-876-5581",
     serviceLevel: "Full Service",
     loginUrl: "https://account.apps.progressive.com/access/login",
@@ -34,7 +34,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "allstate",
     name: "Allstate",
-    logo: "/carrier-logos/allstate-mobile-logo.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/allstate-mobile-logo.png",
     phone: "800-669-1552",
     serviceLevel: "Full Service",
     loginUrl: "https://myaccountrwd.allstate.com/anon/account/login",
@@ -50,7 +50,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "nationwide",
     name: "Nationwide",
-    logo: "/carrier-logos/Nationwide-Mobile.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Nationwide-Mobile.jpg",
     phone: "800-282-1446",
     serviceLevel: "Full Service",
     loginUrl: "https://www.nationwide.com/personal/login",
@@ -66,7 +66,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "travelers",
     name: "Travelers",
-    logo: "/carrier-logos/Travelers-Mobile.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Travelers-Mobile.jpg",
     phone: "877-872-8737",
     serviceLevel: "Full Service",
     loginUrl: "https://www.travelers.com/login/#/",
@@ -82,7 +82,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "liberty-mutual",
     name: "Liberty Mutual",
-    logo: "/carrier-logos/Liberty-Mutual.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Liberty-Mutual.jpg",
     phone: "877-538-1920",
     serviceLevel: "Full Service",
     loginUrl: "https://www.mybusinessonline.libertymutual.com/",
@@ -105,7 +105,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hiscox",
     name: "Hiscox",
-    logo: "/carrier-logos/Hiscox.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Hiscox.png",
     phone: "866-283-7545",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/HiscoxOnline",
@@ -116,7 +116,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "safeco",
     name: "SafeCo",
-    logo: "/carrier-logos/SafeCo-Mobile.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/SafeCo-Mobile.jpg",
     phone: "866-472-3326",
     serviceLevel: "Full Service",
     loginUrl: "https://customer.safeco.com/accountmanager/homepage",
@@ -132,7 +132,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "state-auto",
     name: "State Auto",
-    logo: "/carrier-logos/State-Auto-Mobile.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/State-Auto-Mobile.png",
     phone: "800-288-4425",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://empidn.stateauto.com/WebIdPForms/Login/Portal",
@@ -148,7 +148,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "next-insurance",
     name: "Next Insurance",
-    logo: "/carrier-logos/Next-Insurance.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Next-Insurance.png",
     phone: "855-222-5919",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/NEXTportal",
@@ -164,7 +164,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "coterie",
     name: "Coterie",
-    logo: "/carrier-logos/Coterie-Transparent.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Coterie-Transparent.png",
     phone: "855-566-1011",
     serviceLevel: "Full Service",
     loginUrl: "https://dashboard.coterieinsurance.com/login",
@@ -176,7 +176,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "cna",
     name: "CNA",
-    logo: "/carrier-logos/CNA.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/CNA.jpg",
     phone: "800-262-2000",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://bit.ly/CNALogin",
@@ -188,7 +188,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "pie-insurance",
     name: "Pie Insurance",
-    logo: "/carrier-logos/Pie.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Pie.png",
     phone: "855-275-9884",
     serviceLevel: "Billing & Claim Service",
     loginUrl: "https://partner.pieinsurance.com/sign-in",
@@ -199,7 +199,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "thimble",
     name: "Thimble",
-    logo: "/carrier-logos/Thimble-Agent.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Thimble-Agent.jpg",
     phone: "855-940-4525",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/ThimbleOnline",
@@ -215,7 +215,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "foremost",
     name: "Foremost",
-    logo: "/carrier-logos/Foremost-Agent.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Foremost-Agent.jpg",
     phone: "800-527-3905",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/ForemostLogin",
@@ -231,7 +231,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "american-modern",
     name: "American Modern",
-    logo: "/carrier-logos/American-Modern-Agent.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/American-Modern-Agent.png",
     phone: "800-543-2644",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/AMIGLogin",
@@ -243,7 +243,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hagerty",
     name: "Hagerty",
-    logo: "/carrier-logos/Hagerty.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Hagerty.jpg",
     phone: "877-922-9701",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/HagertyLogin",
@@ -254,7 +254,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "lemonade",
     name: "Lemonade",
-    logo: "/carrier-logos/Lemonade-Agent.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Lemonade-Agent.png",
     phone: "844-733-8666",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/LemonadeOnline",
@@ -269,7 +269,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "openly",
     name: "Openly",
-    logo: "/carrier-logos/Openly-transparent-logo.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Openly-transparent-logo.png",
     phone: "857-990-9080",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3vzLWBR",
@@ -281,7 +281,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "branch",
     name: "Branch",
-    logo: "/carrier-logos/Branch.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Branch.png",
     phone: "855-438-5411",
     serviceLevel: "Full Service",
     loginUrl: "https://account.ourbranch.com/",
@@ -297,7 +297,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "hippo",
     name: "Hippo",
-    logo: "/carrier-logos/Hippo-Agent.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Hippo-Agent.jpg",
     phone: "800-585-0705",
     serviceLevel: "Full Service",
     loginUrl: "https://my.hippo.com/login",
@@ -308,7 +308,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "attune",
     name: "Attune",
-    logo: "/carrier-logos/Attune-Logo.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Attune-Logo.png",
     phone: "888-530-4650",
     serviceLevel: "Partial Service",
     loginUrl: "https://app.attuneinsurance.com/login",
@@ -319,7 +319,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "biberk",
     name: "Berkshire Hathaway (biBERK)",
-    logo: "/carrier-logos/biBERKtile.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/biBERKtile.jpg",
     phone: "844-472-0967",
     serviceLevel: "Full Service",
     loginUrl: "https://www.biberk.com/policyholders",
@@ -330,7 +330,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "dairyland",
     name: "Dairyland",
-    logo: "/carrier-logos/Dairyland-Logo.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Dairyland-Logo.png",
     phone: "800-334-0090",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3joUiqO",
@@ -341,7 +341,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "employers",
     name: "Employers",
-    logo: "/carrier-logos/Employers.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Employers.png",
     phone: "888-682-6671",
     serviceLevel: "Agency Serviced",
     products: ["Worker's Compensation"],
@@ -351,7 +351,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "encompass",
     name: "Encompass",
-    logo: "/carrier-logos/Encompass.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Encompass.png",
     phone: "800-897-9678",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/RIMEncompass",
@@ -362,7 +362,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "grange",
     name: "Grange",
-    logo: "/carrier-logos/Grange-Agent.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Grange-Agent.jpg",
     phone: "855-299-2040",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/GrangeLogin",
@@ -373,7 +373,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "guard",
     name: "Guard",
-    logo: "/carrier-logos/GUARD-Agent.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/GUARD-Agent.png",
     phone: "800-969-5454",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3psJqfJ",
@@ -384,7 +384,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "kemper",
     name: "Kemper",
-    logo: "/carrier-logos/Kemper-mobile-logo.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Kemper-mobile-logo.png",
     phone: "800-327-1500",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3vD7zkH",
@@ -395,7 +395,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "markel",
     name: "Markel",
-    logo: "/carrier-logos/Markel-Firstcomp-Agent.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Markel-Firstcomp-Agent.jpg",
     phone: "888-500-3344",
     serviceLevel: "Full Service",
     loginUrl: "https://account.markel.com/",
@@ -406,7 +406,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "mercury",
     name: "Mercury",
-    logo: "/carrier-logos/Mercury.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Mercury.png",
     phone: "866-539-2075",
     serviceLevel: "Full Service",
     products: ["Personal Auto", "Homeowners", "Business Owners"],
@@ -416,7 +416,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "metlife",
     name: "MetLife",
-    logo: "/carrier-logos/Metlife-Logo.jfif",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Metlife-Logo.jfif",
     phone: "800-422-4272",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/2Zd9Uap",
@@ -427,7 +427,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "national-general",
     name: "National General",
-    logo: "/carrier-logos/National-General.jpg",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/National-General.jpg",
     phone: "877-468-3466",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3E3rhsY",
@@ -438,7 +438,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "stillwater",
     name: "Stillwater",
-    logo: "/carrier-logos/Stillwater.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Stillwater.png",
     phone: "855-712-4092",
     serviceLevel: "Full Service",
     loginUrl: "https://stillwaterinsurance.com/SalesPortal/login",
@@ -449,7 +449,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "the-general",
     name: "The General",
-    logo: "/carrier-logos/The-General-Mobile.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/The-General-Mobile.png",
     phone: "800-280-1466",
     serviceLevel: "Full Service",
     loginUrl: "https://bit.ly/3niYzgK",
@@ -460,7 +460,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "trexis",
     name: "Trexis",
-    logo: "/carrier-logos/Trexis-Mobile.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/Trexis-Mobile.png",
     phone: "877-384-7466",
     serviceLevel: "Partial Service",
     loginUrl: "https://trexis.com/",
@@ -471,7 +471,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "the-hartford",
     name: "The Hartford",
-    logo: "/carrier-logos/The-Hartford.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/The-Hartford.png",
     phone: "800-624-5578",
     serviceLevel: "Full Service",
     loginUrl: "https://www.thehartford.com/login",
@@ -481,7 +481,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "geico",
     name: "Geico",
-    logo: "/carrier-logos/geico-logo.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/geico-logo.png",
     phone: "800-207-7847",
     serviceLevel: "Full Service",
     loginUrl: "https://www.geico.com/login/",
@@ -491,7 +491,7 @@ export const CARRIERS_DATA: Carrier[] = [
   {
     slug: "usli",
     name: "USLI",
-    logo: "/carrier-logos/USLI-Agent.png",
+    logo: "https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/USLI-Agent.png",
     phone: "800-523-5545",
     serviceLevel: "Partial Service",
     loginUrl: "https://bit.ly/3jrn9ep",
