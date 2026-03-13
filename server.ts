@@ -609,9 +609,17 @@ async function startServer() {
   } else {
     // In production, serve static files from dist
     // Include .jfif MIME type since it's not in the default mime database
-    const logoDir = path.join(__dirname, 'dist', 'carrier-logos');
+    const logoDir = path.join(__dirname, 'public', 'carrier-logos');
     const logoCount = fs.existsSync(logoDir) ? fs.readdirSync(logoDir).length : 0;
-    console.log(`[Static] dist/carrier-logos: ${logoCount} files present`);
+    console.log(`[Static] public/carrier-logos: ${logoCount} files present`);
+    // Serve carrier logos directly — bypasses Vite build entirely
+    app.use('/carrier-logos', express.static(logoDir, {
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.jfif')) {
+          res.setHeader('Content-Type', 'image/jpeg');
+        }
+      }
+    }));
     app.use(express.static(path.join(__dirname, "dist"), {
       setHeaders(res, filePath) {
         if (filePath.endsWith('.jfif')) {
