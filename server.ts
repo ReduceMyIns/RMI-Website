@@ -626,6 +626,12 @@ async function startServer() {
     const logoCount = fs.existsSync(logoDir) ? fs.readdirSync(logoDir).length : 0;
     console.log(`[Static] public/carrier-logos: ${logoCount} files present`);
     // Serve carrier logos directly — bypasses Vite build entirely
+    app.use('/carrier-logos', (req, res, next) => {
+      const filePath = path.join(logoDir, req.path);
+      const exists = fs.existsSync(filePath);
+      console.log(`[Logo] ${req.path} -> ${filePath} (${exists ? 'found' : 'MISSING'})`);
+      next();
+    });
     app.use('/carrier-logos', express.static(logoDir, {
       setHeaders(res, filePath) {
         if (filePath.endsWith('.jfif')) {
