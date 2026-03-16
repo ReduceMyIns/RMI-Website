@@ -19,10 +19,18 @@ async function startServer() {
   try {
     if (!admin.apps.length) {
       console.log("Initializing Firebase Admin...");
-      admin.initializeApp({
-        projectId: "rmiaiapp"
-      });
-      console.log("Firebase Admin initialized.");
+      const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      if (serviceAccountJson) {
+        // Explicit service account key (set as Cloud Run secret/env var)
+        const serviceAccount = JSON.parse(serviceAccountJson);
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount), projectId: "rmiaiapp" });
+        console.log("Firebase Admin initialized with explicit service account.");
+      } else {
+        // Falls back to Application Default Credentials (Cloud Run service account)
+        // Ensure the Cloud Run service account has 'Cloud Datastore User' IAM role.
+        admin.initializeApp({ projectId: "rmiaiapp" });
+        console.log("Firebase Admin initialized with ADC (ensure service account has Firestore IAM role).");
+      }
     }
   } catch (error) {
     console.error("Firebase Admin initialization failed:", error);
@@ -607,19 +615,44 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // In production, serve static files from dist
-    // Include .jfif MIME type since it's not in the default mime database
-    const logoDir = path.join(__dirname, 'public', 'carrier-logos');
-    const logoCount = fs.existsSync(logoDir) ? fs.readdirSync(logoDir).length : 0;
-    console.log(`[Static] public/carrier-logos: ${logoCount} files present`);
-    // Serve carrier logos directly — bypasses Vite build entirely
-    app.use('/carrier-logos', express.static(logoDir, {
-      setHeaders(res, filePath) {
-        if (filePath.endsWith('.jfif')) {
-          res.setHeader('Content-Type', 'image/jpeg');
-        }
+    const LOGO_MIME: Record<string, string> = {
+      '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jfif': 'image/jpeg', '.webp': 'image/webp',
+    };
+
+    // Proxy carrier logos with correct Content-Type.
+    // raw.githubusercontent.com sends application/octet-stream + x-content-type-options: nosniff,
+    // which prevents browsers from rendering images. We proxy and force the correct MIME type.
+    // Tries local filesystem first (multiple path layouts), then falls back to GitHub proxy.
+    app.get('/carrier-logos/:filename', async (req, res) => {
+      const filename = req.params.filename;
+      const mimeType = LOGO_MIME[path.extname(filename).toLowerCase()] || 'image/jpeg';
+      const localPaths = [
+        path.join(__dirname, 'public', 'carrier-logos', filename),
+        path.join(__dirname, 'dist',   'carrier-logos', filename),
+        path.join('/workspace', 'public', 'carrier-logos', filename),
+        path.join('/workspace', 'dist',   'carrier-logos', filename),
+      ];
+      for (const p of localPaths) {
+        try {
+          const stat = fs.statSync(p);
+          if (stat.size > 500) {
+            res.setHeader('Content-Type', mimeType);
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            return fs.createReadStream(p).pipe(res as any);
+          }
+        } catch { /* path doesn't exist, try next */ }
       }
-    }));
+      // Proxy from GitHub, overriding the content-type
+      try {
+        const ghRes = await fetch(`https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/${encodeURIComponent(filename)}`);
+        if (!ghRes.ok) { res.status(404).end(); return; }
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.send(Buffer.from(await ghRes.arrayBuffer()));
+      } catch { res.status(500).end(); }
+    });
+
     app.use(express.static(path.join(__dirname, "dist"), {
       setHeaders(res, filePath) {
         if (filePath.endsWith('.jfif')) {
