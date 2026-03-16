@@ -4,18 +4,18 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 const carriers = [
-  { name: 'Progressive', src: '/carrier-logos/Progressive-Mobile.png', slug: 'progressive' },
-  { name: 'Travelers', src: '/carrier-logos/Travelers-Mobile.jpg', slug: 'travelers' },
-  { name: 'Nationwide', src: '/carrier-logos/Nationwide-Mobile.jpg', slug: 'nationwide' },
-  { name: 'Liberty Mutual', src: '/carrier-logos/Liberty-Mutual.jpg', slug: 'liberty-mutual' },
-  { name: 'The Hartford', src: '/carrier-logos/The-Hartford.png', slug: 'the-hartford' },
-  { name: 'SafeCo', src: '/carrier-logos/SafeCo-Mobile.jpg', slug: 'safeco' },
-  { name: 'Hiscox', src: '/carrier-logos/Hiscox.png', slug: 'hiscox' },
-  { name: 'Openly', src: '/carrier-logos/Openly-transparent-logo.png', slug: 'openly' },
-  { name: 'Geico', src: '/carrier-logos/geico-logo.png', slug: 'geico' },
-  { name: 'Next', src: '/carrier-logos/Next-Insurance.png', slug: 'next-insurance' },
-  { name: 'Encompass', src: '/carrier-logos/Encompass.png', slug: 'encompass' },
-  { name: 'Employers', src: '/carrier-logos/Employers.png', slug: 'employers' },
+  { name: 'Progressive', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Progressive-Mobile.png', slug: 'progressive' },
+  { name: 'Travelers', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Travelers-Mobile.jpg', slug: 'travelers' },
+  { name: 'Nationwide', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Nationwide-Mobile.jpg', slug: 'nationwide' },
+  { name: 'Liberty Mutual', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Liberty-Mutual.jpg', slug: 'liberty-mutual' },
+  { name: 'The Hartford', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/The-Hartford.png', slug: 'the-hartford' },
+  { name: 'SafeCo', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/SafeCo-Mobile.jpg', slug: 'safeco' },
+  { name: 'Hiscox', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Hiscox.png', slug: 'hiscox' },
+  { name: 'Openly', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Openly-transparent-logo.png', slug: 'openly' },
+  { name: 'Geico', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/geico-logo.png', slug: 'geico' },
+  { name: 'Next', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Next-Insurance.png', slug: 'next-insurance' },
+  { name: 'Encompass', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Encompass.png', slug: 'encompass' },
+  { name: 'Employers', src: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Employers.png', slug: 'employers' },
 ];
 
 const CarrierSlider: React.FC = () => {
