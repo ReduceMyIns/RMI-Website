@@ -14,7 +14,7 @@ function openOpenlyChat() {
 
 const carrier = {
   name: 'Openly',
-  logo: '/carrier-logos/Openly-transparent-logo.png',
+  logo: 'https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/Openly-transparent-logo.png',
   phone: '857-990-9080',
   serviceLevel: 'Full Service',
   loginUrl: 'https://bit.ly/3vzLWBR',
