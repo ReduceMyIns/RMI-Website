@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   console.log("Starting server...");
+  console.log(`[startup] __dirname=${__dirname} cwd=${process.cwd()} NODE_ENV=${process.env.NODE_ENV}`);
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -601,6 +602,26 @@ async function startServer() {
     }
   });
 
+  // Debug endpoint: shows filesystem layout and carrier logo availability at runtime
+  app.get('/api/debug/images', (req, res) => {
+    const dirs = [
+      path.join(__dirname, 'public', 'carrier-logos'),
+      path.join(__dirname, 'dist', 'carrier-logos'),
+      path.join(process.cwd(), 'public', 'carrier-logos'),
+      path.join('/app', 'public', 'carrier-logos'),
+    ];
+    const info: Record<string, any> = { __dirname, cwd: process.cwd() };
+    for (const d of dirs) {
+      try {
+        const files = fs.readdirSync(d);
+        info[d] = `${files.length} files`;
+      } catch {
+        info[d] = 'NOT FOUND';
+      }
+    }
+    res.json(info);
+  });
+
   // Catch-all for API routes to prevent falling through to SPA
   app.all('/api/*', (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
@@ -620,37 +641,42 @@ async function startServer() {
       '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jfif': 'image/jpeg', '.webp': 'image/webp',
     };
 
-    // Proxy carrier logos with correct Content-Type.
-    // raw.githubusercontent.com sends application/octet-stream + x-content-type-options: nosniff,
-    // which prevents browsers from rendering images. We proxy and force the correct MIME type.
-    // Tries local filesystem first (multiple path layouts), then falls back to GitHub proxy.
+    // Serve carrier logos: try local filesystem first (multiple layouts), then jsDelivr CDN.
     app.get('/carrier-logos/:filename', async (req, res) => {
       const filename = req.params.filename;
       const mimeType = LOGO_MIME[path.extname(filename).toLowerCase()] || 'image/jpeg';
       const localPaths = [
         path.join(__dirname, 'public', 'carrier-logos', filename),
         path.join(__dirname, 'dist',   'carrier-logos', filename),
-        path.join('/workspace', 'public', 'carrier-logos', filename),
-        path.join('/workspace', 'dist',   'carrier-logos', filename),
+        path.join(process.cwd(), 'public', 'carrier-logos', filename),
+        path.join(process.cwd(), 'dist',   'carrier-logos', filename),
+        path.join('/app', 'public', 'carrier-logos', filename),
+        path.join('/app', 'dist',   'carrier-logos', filename),
       ];
       for (const p of localPaths) {
         try {
           const stat = fs.statSync(p);
-          if (stat.size > 500) {
+          if (stat.size > 100) {
             res.setHeader('Content-Type', mimeType);
             res.setHeader('Cache-Control', 'public, max-age=86400');
+            console.log(`[logo] serving local: ${p}`);
             return fs.createReadStream(p).pipe(res as any);
           }
         } catch { /* path doesn't exist, try next */ }
       }
-      // Proxy from GitHub, overriding the content-type
+      // Fallback: jsDelivr CDN (serves GitHub files with correct Content-Type, no auth required)
+      console.log(`[logo] local not found for ${filename}, falling back to jsDelivr`);
       try {
-        const ghRes = await fetch(`https://raw.githubusercontent.com/ReduceMyIns/RMI-Website/main/public/carrier-logos/${encodeURIComponent(filename)}`);
-        if (!ghRes.ok) { res.status(404).end(); return; }
+        const cdnUrl = `https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/${encodeURIComponent(filename)}`;
+        const cdnRes = await fetch(cdnUrl);
+        if (!cdnRes.ok) { res.status(404).end(); return; }
         res.setHeader('Content-Type', mimeType);
         res.setHeader('Cache-Control', 'public, max-age=86400');
-        res.send(Buffer.from(await ghRes.arrayBuffer()));
-      } catch { res.status(500).end(); }
+        res.send(Buffer.from(await cdnRes.arrayBuffer()));
+      } catch (e) {
+        console.error(`[logo] CDN fallback failed for ${filename}:`, e);
+        res.status(500).end();
+      }
     });
 
     app.use(express.static(path.join(__dirname, "dist"), {
