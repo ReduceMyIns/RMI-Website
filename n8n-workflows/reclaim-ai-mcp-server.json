@@ -2,311 +2,24 @@
   "name": "Reclaim AI MCP Server",
   "nodes": [
     {
-      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "id": "01018eec-aabe-42bc-82bd-f93169b1259c",
       "name": "MCP Trigger",
       "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
       "typeVersion": 1,
-      "position": [200, 300],
+      "position": [-736, 0],
       "webhookId": "reclaim-ai-mcp-server-v1",
       "parameters": {
-        "toolsUi": {
-          "toolsValues": [
-            {
-              "name": "list_tasks",
-              "description": "List all tasks in Reclaim.ai. Optionally filter by status (NEW, SCHEDULED, IN_PROGRESS, COMPLETE, CANCELLED, ARCHIVED) or priority (P1, P2, P3, P4).",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"status\":{\"type\":\"string\",\"description\":\"Filter by task status: NEW, SCHEDULED, IN_PROGRESS, COMPLETE, CANCELLED, ARCHIVED\"},\"priority\":{\"type\":\"string\",\"description\":\"Filter by priority: P1, P2, P3, or P4\"},\"instances\":{\"type\":\"boolean\",\"description\":\"Include task instances\"}}}"
-            },
-            {
-              "name": "get_task",
-              "description": "Get a specific task by its ID from Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"The unique task ID\"}},\"required\":[\"id\"]}"
-            },
-            {
-              "name": "create_task",
-              "description": "Create a new task in Reclaim.ai. Time chunks are 15-minute increments (e.g., 4 chunks = 1 hour, 8 chunks = 2 hours).",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\",\"description\":\"Task title/name\"},\"timeChunksRequired\":{\"type\":\"number\",\"description\":\"Total time needed in 15-min chunks (4=1hr, 8=2hr)\"},\"due\":{\"type\":\"string\",\"description\":\"Due date in ISO 8601 format\"},\"priority\":{\"type\":\"string\",\"description\":\"Priority: P1 (critical), P2 (high), P3 (medium), P4 (low)\"},\"notes\":{\"type\":\"string\",\"description\":\"Task description or notes\"},\"minChunkSize\":{\"type\":\"number\",\"description\":\"Minimum session length in 15-min chunks\"},\"maxChunkSize\":{\"type\":\"number\",\"description\":\"Maximum session length in 15-min chunks\"},\"onDeck\":{\"type\":\"boolean\",\"description\":\"Mark as on deck for priority scheduling\"},\"alwaysPrivate\":{\"type\":\"boolean\",\"description\":\"Keep task private on calendar\"}},\"required\":[\"title\"]}"
-            },
-            {
-              "name": "update_task",
-              "description": "Update an existing task in Reclaim.ai. Provide taskId plus any fields to change.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"taskId\":{\"type\":\"string\",\"description\":\"The task ID to update\"},\"title\":{\"type\":\"string\",\"description\":\"New task title\"},\"timeChunksRequired\":{\"type\":\"number\",\"description\":\"Total time in 15-min chunks\"},\"due\":{\"type\":\"string\",\"description\":\"New due date in ISO 8601 format\"},\"priority\":{\"type\":\"string\",\"description\":\"P1, P2, P3, or P4\"},\"notes\":{\"type\":\"string\",\"description\":\"Task notes/description\"},\"status\":{\"type\":\"string\",\"description\":\"Task status\"},\"onDeck\":{\"type\":\"boolean\",\"description\":\"On deck status\"}},\"required\":[\"taskId\"]}"
-            },
-            {
-              "name": "delete_task",
-              "description": "Permanently delete a task from Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"The task ID to delete\"}},\"required\":[\"id\"]}"
-            },
-            {
-              "name": "complete_task",
-              "description": "Mark a task as done/complete in Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"taskId\":{\"type\":\"string\",\"description\":\"The task ID to mark complete\"}},\"required\":[\"taskId\"]}"
-            },
-            {
-              "name": "uncomplete_task",
-              "description": "Unarchive or mark a completed task as incomplete in Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"taskId\":{\"type\":\"string\",\"description\":\"The task ID to uncomplete/unarchive\"}},\"required\":[\"taskId\"]}"
-            },
-            {
-              "name": "start_task",
-              "description": "Start working on a task now in Reclaim.ai (tracks active work time).",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"taskId\":{\"type\":\"string\",\"description\":\"The task ID to start\"}},\"required\":[\"taskId\"]}"
-            },
-            {
-              "name": "stop_task",
-              "description": "Stop working on an active task in Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"taskId\":{\"type\":\"string\",\"description\":\"The task ID to stop\"}},\"required\":[\"taskId\"]}"
-            },
-            {
-              "name": "add_time_to_task",
-              "description": "Add additional time (in minutes) to a task in Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"taskId\":{\"type\":\"string\",\"description\":\"The task ID\"},\"minutes\":{\"type\":\"number\",\"description\":\"Number of minutes to add to the task\"}},\"required\":[\"taskId\",\"minutes\"]}"
-            },
-            {
-              "name": "get_events",
-              "description": "Get calendar events from Reclaim.ai for a given date range.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"start\":{\"type\":\"string\",\"description\":\"Start date/time in ISO 8601 format\"},\"end\":{\"type\":\"string\",\"description\":\"End date/time in ISO 8601 format\"}},\"required\":[\"start\",\"end\"]}"
-            },
-            {
-              "name": "get_current_user",
-              "description": "Get the current authenticated user's profile and settings from Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{}}"
-            },
-            {
-              "name": "list_smart_habits",
-              "description": "List all smart habits (recurring time blocks) configured in Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{}}"
-            },
-            {
-              "name": "list_smart_meetings",
-              "description": "List all smart 1:1 meeting configurations in Reclaim.ai.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{}}"
-            },
-            {
-              "name": "get_focus_insights",
-              "description": "Get focus time analytics and productivity insights from Reclaim.ai. Optionally filter by date range.",
-              "inputSchema": "{\"type\":\"object\",\"properties\":{\"start\":{\"type\":\"string\",\"description\":\"Start date in ISO 8601 format\"},\"end\":{\"type\":\"string\",\"description\":\"End date in ISO 8601 format\"}}}"
-            }
-          ]
-        }
+        "path": "reclaim-ai-mcp-server-v1"
       }
     },
     {
-      "id": "a1b2c3d4-0002-0002-0002-000000000002",
-      "name": "Route Tool",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [440, 300],
+      "id": "t0000001-0000-0000-0000-000000000001",
+      "name": "list_tasks",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -700],
       "parameters": {
-        "mode": "rules",
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-01",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "list_tasks",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-02",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "get_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-03",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "create_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-04",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "update_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-05",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "delete_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-06",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "complete_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-07",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "uncomplete_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-08",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "start_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-09",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "stop_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-10",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "add_time_to_task",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-11",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "get_events",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-12",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "get_current_user",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-13",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "list_smart_habits",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-14",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "list_smart_meetings",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "id": "rule-15",
-                    "leftValue": "={{ $json.name }}",
-                    "rightValue": "get_focus_insights",
-                    "operator": { "type": "string", "operation": "equals" }
-                  }
-                ],
-                "combinator": "and"
-              }
-            }
-          ]
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "a1b2c3d4-0003-0003-0003-000000000003",
-      "name": "List Tasks",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -700],
-      "parameters": {
+        "description": "List all tasks in Reclaim.ai. Optionally filter by status (NEW, SCHEDULED, IN_PROGRESS, COMPLETE, CANCELLED, ARCHIVED) or priority (P1, P2, P3, P4).",
         "method": "GET",
         "url": "https://api.app.reclaim.ai/api/tasks",
         "sendHeaders": true,
@@ -318,38 +31,48 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "status", "value": "={{ $json.params.status }}" },
-            { "name": "priority", "value": "={{ $json.params.priority }}" }
+            {
+              "name": "status",
+              "value": "={{ $fromAI('status', 'Filter by task status: NEW, SCHEDULED, IN_PROGRESS, COMPLETE, CANCELLED, ARCHIVED (optional)', 'string') }}"
+            },
+            {
+              "name": "priority",
+              "value": "={{ $fromAI('priority', 'Filter by priority: P1, P2, P3, P4 (optional)', 'string') }}"
+            }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0004-0004-0004-000000000004",
-      "name": "Get Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -600],
+      "id": "t0000002-0000-0000-0000-000000000002",
+      "name": "get_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -600],
       "parameters": {
+        "description": "Get a specific task by its ID from Reclaim.ai.",
         "method": "GET",
-        "url": "={{ \"https://api.app.reclaim.ai/api/tasks/\" + $json.params.id }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/tasks/\" + $fromAI('id', 'The unique task ID', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0005-0005-0005-000000000005",
-      "name": "Create Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -500],
+      "id": "t0000003-0000-0000-0000-000000000003",
+      "name": "create_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -500],
       "parameters": {
+        "description": "Create a new task in Reclaim.ai. Time chunks are 15-minute increments (4=1hr, 8=2hr). Required: title. Optional: timeChunksRequired, due (ISO 8601), priority (P1-P4), notes, minChunkSize, maxChunkSize, onDeck, alwaysPrivate.",
         "method": "POST",
         "url": "https://api.app.reclaim.ai/api/tasks",
         "sendHeaders": true,
@@ -361,19 +84,21 @@
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.params) }}",
-        "options": {}
+        "jsonBody": "={{ $fromAI('body', 'Task object. Required: title. Optional: timeChunksRequired (number, 4=1hr), due (ISO 8601 date), priority (P1/P2/P3/P4), notes, minChunkSize, maxChunkSize, onDeck (boolean), alwaysPrivate (boolean)', 'json') }}",
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0006-0006-0006-000000000006",
-      "name": "Update Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -400],
+      "id": "t0000004-0000-0000-0000-000000000004",
+      "name": "update_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -400],
       "parameters": {
+        "description": "Update an existing task in Reclaim.ai. Provide the taskId in the URL and any fields to change in the body.",
         "method": "PATCH",
-        "url": "={{ \"https://api.app.reclaim.ai/api/tasks/\" + $json.params.taskId }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/tasks/\" + $fromAI('taskId', 'The task ID to update', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -383,109 +108,121 @@
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.params) }}",
-        "options": {}
+        "jsonBody": "={{ $fromAI('body', 'Partial task object with fields to update. Options: title, timeChunksRequired, due (ISO 8601), priority (P1-P4), notes, status, onDeck', 'json') }}",
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0007-0007-0007-000000000007",
-      "name": "Delete Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -300],
+      "id": "t0000005-0000-0000-0000-000000000005",
+      "name": "delete_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -300],
       "parameters": {
+        "description": "Permanently delete a task from Reclaim.ai.",
         "method": "DELETE",
-        "url": "={{ \"https://api.app.reclaim.ai/api/tasks/\" + $json.params.id }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/tasks/\" + $fromAI('id', 'The task ID to delete', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0008-0008-0008-000000000008",
-      "name": "Complete Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -200],
+      "id": "t0000006-0000-0000-0000-000000000006",
+      "name": "complete_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -200],
       "parameters": {
+        "description": "Mark a task as done/complete in Reclaim.ai.",
         "method": "POST",
-        "url": "={{ \"https://api.app.reclaim.ai/api/planner/done/task/\" + $json.params.taskId }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/planner/done/task/\" + $fromAI('taskId', 'The task ID to mark as complete', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0009-0009-0009-000000000009",
-      "name": "Uncomplete Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, -100],
+      "id": "t0000007-0000-0000-0000-000000000007",
+      "name": "uncomplete_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, -100],
       "parameters": {
+        "description": "Unarchive or mark a completed task as incomplete in Reclaim.ai.",
         "method": "POST",
-        "url": "={{ \"https://api.app.reclaim.ai/api/planner/unarchive/task/\" + $json.params.taskId }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/planner/unarchive/task/\" + $fromAI('taskId', 'The task ID to uncomplete/unarchive', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0010-0010-0010-000000000010",
-      "name": "Start Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 0],
+      "id": "t0000008-0000-0000-0000-000000000008",
+      "name": "start_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 0],
       "parameters": {
+        "description": "Start working on a task now in Reclaim.ai. This tracks active work time on the task.",
         "method": "POST",
-        "url": "={{ \"https://api.app.reclaim.ai/api/planner/start/task/\" + $json.params.taskId }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/planner/start/task/\" + $fromAI('taskId', 'The task ID to start working on', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0011-0011-0011-000000000011",
-      "name": "Stop Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 100],
+      "id": "t0000009-0000-0000-0000-000000000009",
+      "name": "stop_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 100],
       "parameters": {
+        "description": "Stop working on an active task in Reclaim.ai.",
         "method": "POST",
-        "url": "={{ \"https://api.app.reclaim.ai/api/planner/stop/task/\" + $json.params.taskId }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/planner/stop/task/\" + $fromAI('taskId', 'The task ID to stop working on', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0012-0012-0012-000000000012",
-      "name": "Add Time to Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 200],
+      "id": "t0000010-0000-0000-0000-000000000010",
+      "name": "add_time_to_task",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 200],
       "parameters": {
+        "description": "Add additional time in minutes to a task in Reclaim.ai.",
         "method": "POST",
-        "url": "={{ \"https://api.app.reclaim.ai/api/planner/add-time/task/\" + $json.params.taskId }}",
+        "url": "={{ \"https://api.app.reclaim.ai/api/planner/add-time/task/\" + $fromAI('taskId', 'The task ID to add time to', 'string') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -495,19 +232,24 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "minutes", "value": "={{ $json.params.minutes }}" }
+            {
+              "name": "minutes",
+              "value": "={{ $fromAI('minutes', 'Number of minutes to add to the task', 'number') }}"
+            }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0013-0013-0013-000000000013",
-      "name": "Get Events",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 300],
+      "id": "t0000011-0000-0000-0000-000000000011",
+      "name": "get_events",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 300],
       "parameters": {
+        "description": "Get calendar events from Reclaim.ai for a given date range.",
         "method": "GET",
         "url": "https://api.app.reclaim.ai/api/events",
         "sendHeaders": true,
@@ -519,20 +261,28 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "start", "value": "={{ $json.params.start }}" },
-            { "name": "end", "value": "={{ $json.params.end }}" }
+            {
+              "name": "start",
+              "value": "={{ $fromAI('start', 'Start date/time in ISO 8601 format', 'string') }}"
+            },
+            {
+              "name": "end",
+              "value": "={{ $fromAI('end', 'End date/time in ISO 8601 format', 'string') }}"
+            }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0014-0014-0014-000000000014",
-      "name": "Get Current User",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 400],
+      "id": "t0000012-0000-0000-0000-000000000012",
+      "name": "get_current_user",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 400],
       "parameters": {
+        "description": "Get the current authenticated user's profile and settings from Reclaim.ai.",
         "method": "GET",
         "url": "https://api.app.reclaim.ai/api/users/current",
         "sendHeaders": true,
@@ -541,16 +291,18 @@
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0015-0015-0015-000000000015",
-      "name": "List Smart Habits",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 500],
+      "id": "t0000013-0000-0000-0000-000000000013",
+      "name": "list_smart_habits",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 500],
       "parameters": {
+        "description": "List all smart habits (recurring time blocks) configured in Reclaim.ai.",
         "method": "GET",
         "url": "https://api.app.reclaim.ai/api/smart-habits",
         "sendHeaders": true,
@@ -559,16 +311,18 @@
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0016-0016-0016-000000000016",
-      "name": "List Smart Meetings",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 600],
+      "id": "t0000014-0000-0000-0000-000000000014",
+      "name": "list_smart_meetings",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 600],
       "parameters": {
+        "description": "List all smart 1:1 meeting configurations in Reclaim.ai.",
         "method": "GET",
         "url": "https://api.app.reclaim.ai/api/smart-meetings",
         "sendHeaders": true,
@@ -577,16 +331,18 @@
             { "name": "Authorization", "value": "Bearer 9c54e1ea-6df0-49c5-aab9-18592a8253d3" }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     },
     {
-      "id": "a1b2c3d4-0017-0017-0017-000000000017",
-      "name": "Get Focus Insights",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 700],
+      "id": "t0000015-0000-0000-0000-000000000015",
+      "name": "get_focus_insights",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [-496, 700],
       "parameters": {
+        "description": "Get focus time analytics and productivity insights from Reclaim.ai. Optionally filter by date range.",
         "method": "GET",
         "url": "https://api.app.reclaim.ai/api/analytics/focus/insights/V3",
         "sendHeaders": true,
@@ -598,42 +354,44 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "start", "value": "={{ $json.params.start }}" },
-            { "name": "end", "value": "={{ $json.params.end }}" }
+            {
+              "name": "start",
+              "value": "={{ $fromAI('start', 'Start date in ISO 8601 format (optional)', 'string') }}"
+            },
+            {
+              "name": "end",
+              "value": "={{ $fromAI('end', 'End date in ISO 8601 format (optional)', 'string') }}"
+            }
           ]
         },
-        "options": {}
+        "options": {},
+        "optimizeResponse": true
       }
     }
   ],
   "connections": {
-    "MCP Trigger": {
-      "main": [
-        [{ "node": "Route Tool", "type": "main", "index": 0 }]
-      ]
-    },
-    "Route Tool": {
-      "main": [
-        [{ "node": "List Tasks", "type": "main", "index": 0 }],
-        [{ "node": "Get Task", "type": "main", "index": 0 }],
-        [{ "node": "Create Task", "type": "main", "index": 0 }],
-        [{ "node": "Update Task", "type": "main", "index": 0 }],
-        [{ "node": "Delete Task", "type": "main", "index": 0 }],
-        [{ "node": "Complete Task", "type": "main", "index": 0 }],
-        [{ "node": "Uncomplete Task", "type": "main", "index": 0 }],
-        [{ "node": "Start Task", "type": "main", "index": 0 }],
-        [{ "node": "Stop Task", "type": "main", "index": 0 }],
-        [{ "node": "Add Time to Task", "type": "main", "index": 0 }],
-        [{ "node": "Get Events", "type": "main", "index": 0 }],
-        [{ "node": "Get Current User", "type": "main", "index": 0 }],
-        [{ "node": "List Smart Habits", "type": "main", "index": 0 }],
-        [{ "node": "List Smart Meetings", "type": "main", "index": 0 }],
-        [{ "node": "Get Focus Insights", "type": "main", "index": 0 }]
-      ]
-    }
+    "list_tasks":        { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "get_task":          { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "create_task":       { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "update_task":       { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "delete_task":       { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "complete_task":     { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "uncomplete_task":   { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "start_task":        { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "stop_task":         { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "add_time_to_task":  { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "get_events":        { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "get_current_user":  { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "list_smart_habits": { "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "list_smart_meetings":{ "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] },
+    "get_focus_insights":{ "ai_tool": [[{ "node": "MCP Trigger", "type": "ai_tool", "index": 0 }]] }
   },
+  "pinData": {},
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null
+  "staticData": null,
+  "meta": {
+    "instanceId": "459459d74189eb86eafd6f38a1f7e0ad6223a1a1fa2aaf6313d0a175a59ac878"
+  }
 }
