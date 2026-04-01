@@ -620,6 +620,34 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // Serve carrier logos using raw Buffer reads to prevent binary corruption.
+    // express.static can corrupt binary files by treating them as UTF-8 text in some
+    // environments. Using fs.readFileSync + res.end(Buffer) sends raw bytes.
+    const logoMimeTypes: Record<string, string> = {
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.jfif': 'image/jpeg',
+      '.webp': 'image/webp',
+    };
+    app.get('/carrier-logos/:filename', (req, res) => {
+      const filename = path.basename(req.params.filename);
+      const ext = path.extname(filename).toLowerCase();
+      const mimeType = logoMimeTypes[ext] || 'application/octet-stream';
+      const filePath = path.join(__dirname, 'dist', 'carrier-logos', filename);
+      try {
+        const data = fs.readFileSync(filePath);
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Content-Length', data.length);
+        res.end(data);
+      } catch {
+        res.status(404).end();
+      }
+    });
+
     // Serve all static assets from dist/ (Vite copies public/ including carrier-logos/ here at build time).
     // setHeaders fixes .jfif files which have no standard MIME type in Node's mime database.
     app.use(express.static(path.join(__dirname, "dist"), {
