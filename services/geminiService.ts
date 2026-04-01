@@ -3,12 +3,28 @@ import { GoogleGenAI, FunctionDeclaration, Type, Modality, LiveServerMessage, Bl
 import { dbService } from './dbService';
 import { AIAnalysisResult } from '../types';
 
+// API key: baked in at Vite build time if available, otherwise fetched from /api/config at runtime.
+// Cloud Run sets GEMINI_API_KEY as a runtime env var which is NOT available to Vite at build time,
+// so we fetch it lazily from the server on first use.
+let _resolvedApiKey: string = process.env.API_KEY || '';
+
+async function getApiKey(): Promise<string> {
+  if (_resolvedApiKey) return _resolvedApiKey;
+  try {
+    const res = await fetch('/api/config');
+    const data = await res.json();
+    if (data.apiKey) _resolvedApiKey = data.apiKey;
+  } catch { /* ignore, will throw below */ }
+  return _resolvedApiKey;
+}
+
 // Helper to get initialized AI client
-const getAi = () => {
-  if (!process.env.API_KEY) {
-    throw new Error("Gemini API Key is missing. Please configure it in your environment variables.");
+const getAi = async () => {
+  const key = await getApiKey();
+  if (!key) {
+    throw new Error("Gemini API Key is missing. Please set GEMINI_API_KEY in Cloud Run environment variables.");
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey: key });
 };
 
 const INJECTED_SYSTEM_INSTRUCTION = `You are a professional insurance agent at ReduceMyInsurance.Net.
@@ -58,7 +74,7 @@ const searchAcademyDeclaration: FunctionDeclaration = {
 };
 
 export const getAIResponse = async (prompt: string, history: any[], useThinking: boolean = false, context?: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const model = 'gemini-3-pro-preview';
   
   // RAG Step: Fetch context from Firestore Knowledge Base using ONLY the prompt (user query)
@@ -86,7 +102,7 @@ export const getAIResponse = async (prompt: string, history: any[], useThinking:
 };
 
 export const researchProperty = async (address: string, occupancyType?: string, policyType?: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3.1-pro-preview',
     contents: `Research this property address for insurance underwriting data: ${address}. 
@@ -128,7 +144,7 @@ export const researchProperty = async (address: string, occupancyType?: string, 
 };
 
 export const searchIndustryCodes = async (query: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Find the NAIC and SIC codes for this business type: ${query}. Return JSON with fields: naic, sic.`,
@@ -144,7 +160,7 @@ export const searchIndustryCodes = async (query: string) => {
 };
 
 export const findLienholderAddress = async (name: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Find the insurance loss payee / lienholder address for: ${name}. Return JSON with fields: address, city, state, zip.`,
@@ -161,7 +177,7 @@ export const findLienholderAddress = async (name: string) => {
 };
 
 export const decodeVin = async (vin: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Decode this VIN: ${vin}. Return JSON with: year, make, model.`,
@@ -177,7 +193,7 @@ export const decodeVin = async (vin: string) => {
 };
 
 export const checkVehicleRecalls = async (year: number, make: string, model: string, vin?: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const prompt = vin 
     ? `Check for safety recalls for VIN: ${vin}.`
     : `Check for safety recalls for a ${year} ${make} ${model}.`;
@@ -199,7 +215,7 @@ export const checkVehicleRecalls = async (year: number, make: string, model: str
 };
 
 export const fetchRecallMakes = async (year: number) => {
-    const ai = getAi();
+    const ai = await getAi();
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `List common car makes for the year ${year}. Return JSON array of strings.`,
@@ -209,7 +225,7 @@ export const fetchRecallMakes = async (year: number) => {
 };
 
 export const fetchRecallModels = async (year: number, make: string) => {
-    const ai = getAi();
+    const ai = await getAi();
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `List car models for ${year} ${make}. Return JSON array of strings.`,
@@ -219,7 +235,7 @@ export const fetchRecallModels = async (year: number, make: string) => {
 };
 
 export const getMarketSearchResponse = async (query: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: query,
@@ -234,7 +250,7 @@ export const getMarketSearchResponse = async (query: string) => {
 };
 
 export const getMapsResponse = async (query: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: query,
@@ -249,7 +265,7 @@ export const getMapsResponse = async (query: string) => {
 };
 
 export const analyzeMedia = async (prompt: string, media: { data: string, mimeType: string }) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: [
@@ -266,7 +282,7 @@ export const analyzeMedia = async (prompt: string, media: { data: string, mimeTy
 };
 
 export const generateSpeech = async (text: string): Promise<string | undefined> => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-preview-tts',
     contents: { parts: [{ text }] },
@@ -281,7 +297,7 @@ export const generateSpeech = async (text: string): Promise<string | undefined> 
 };
 
 export const generatePolicyImage = async (prompt: string, aspectRatio: string = '1:1') => {
-  const ai = getAi();
+  const ai = await getAi();
   try {
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
@@ -301,7 +317,7 @@ export const generatePolicyImage = async (prompt: string, aspectRatio: string = 
 };
 
 export const getLiteResponse = async (prompt: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-flash-lite-latest',
     contents: prompt
@@ -310,7 +326,7 @@ export const getLiteResponse = async (prompt: string) => {
 };
 
 export const generateArticleContent = async (topic: string, mode: 'SEO' | 'INTERNAL', fileData?: { data: string, mimeType: string }) => {
-  const ai = getAi();
+  const ai = await getAi();
   const prompt = mode === 'SEO' 
     ? `Write an SEO-optimized blog post about "${topic}". Use markdown formatting.`
     : `Write an internal agency knowledge base article about "${topic}". Use markdown formatting.`;
@@ -332,7 +348,7 @@ export const analyzeInspectionPhoto = async (
   category: string, 
   description: string
 ): Promise<AIAnalysisResult | null> => {
-  const ai = getAi();
+  const ai = await getAi();
   const prompt = `Analyze this image for an insurance inspection requirement.
   Category: ${category}
   Requirement Description: ${description}
@@ -400,7 +416,7 @@ export const analyzeInspectionPhoto = async (
 };
 
 export const connectInspectionSession = (pendingItems: string[], currentFocus: string, callbacks: any) => {
-    const ai = getAi();
+    const ai = await getAi();
     return ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         config: {
@@ -445,7 +461,7 @@ export const analyzeVehiclePhoto = async (
 };
 
 export const extractRegistrationData = async (media: { data: string, mimeType: string }) => {
-    const ai = getAi();
+    const ai = await getAi();
     const prompt = `Extract vehicle registration details from this image. 
     Return JSON: { 
         "year": number, 
@@ -483,7 +499,7 @@ export const extractRegistrationData = async (media: { data: string, mimeType: s
 };
 
 export const extractPolicyData = async (media: { data: string, mimeType: string }) => {
-    const ai = getAi();
+    const ai = await getAi();
     const prompt = `Extract data from this insurance policy declaration page for a new application.
     Return JSON format:
     {
@@ -535,7 +551,7 @@ export const extractPolicyData = async (media: { data: string, mimeType: string 
 };
 
 export const generateBillOfSaleTerms = async (conditions: string) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Generate a specific set of legal "Terms and Conditions" for a private party vehicle Bill of Sale based on these notes: "${conditions}". 
@@ -546,7 +562,7 @@ export const generateBillOfSaleTerms = async (conditions: string) => {
 };
 
 export const generateSafetyPlanContent = async (businessName: string, industry: string, hazards: string[]) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: `Write a formal written safety plan for a business named "${businessName}" in the "${industry}" industry.
@@ -565,7 +581,7 @@ export const generateSafetyPlanContent = async (businessName: string, industry: 
 };
 
 export const getBusinessCoachResponse = async (history: any[], business: { name: string, industry: string }) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: history,
@@ -588,7 +604,7 @@ export const getBusinessCoachResponse = async (history: any[], business: { name:
 };
 
 export const generateFinalBusinessPlan = async (history: any[], business: { name: string, industry: string }) => {
-  const ai = getAi();
+  const ai = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: [

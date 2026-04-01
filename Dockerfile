@@ -38,9 +38,8 @@ COPY data/ ./data/
 
 # Cloud Run provides PORT env var; default to 3000 to match AI Studio config
 ENV NODE_ENV=production
-ENV PORT=3000
-
-EXPOSE 3000
+# PORT is injected by Cloud Run (defaults to 8080); server.ts reads process.env.PORT
+EXPOSE 8080
 
 # tsx is in dependencies so it's available here
 CMD ["npx", "tsx", "server.ts"]

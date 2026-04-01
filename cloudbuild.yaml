@@ -24,7 +24,7 @@ steps:
       - --region=us-west1
       - --platform=managed
       - --allow-unauthenticated
-      - --port=3000
+      - --port=8080
 
 images:
   - gcr.io/$PROJECT_ID/rmi-website:$COMMIT_SHA

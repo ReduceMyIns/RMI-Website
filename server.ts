@@ -12,7 +12,6 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   console.log("Starting server...");
-  console.log(`[startup] __dirname=${__dirname} cwd=${process.cwd()} NODE_ENV=${process.env.NODE_ENV}`);
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -602,24 +601,9 @@ async function startServer() {
     }
   });
 
-  // Debug endpoint: shows filesystem layout and carrier logo availability at runtime
-  app.get('/api/debug/images', (req, res) => {
-    const dirs = [
-      path.join(__dirname, 'public', 'carrier-logos'),
-      path.join(__dirname, 'dist', 'carrier-logos'),
-      path.join(process.cwd(), 'public', 'carrier-logos'),
-      path.join('/app', 'public', 'carrier-logos'),
-    ];
-    const info: Record<string, any> = { __dirname, cwd: process.cwd() };
-    for (const d of dirs) {
-      try {
-        const files = fs.readdirSync(d);
-        info[d] = `${files.length} files`;
-      } catch {
-        info[d] = 'NOT FOUND';
-      }
-    }
-    res.json(info);
+  // Expose runtime config to the frontend (API key is a Cloud Run env var, not available at Vite build time)
+  app.get('/api/config', (req, res) => {
+    res.json({ apiKey: process.env.GEMINI_API_KEY || '' });
   });
 
   // Catch-all for API routes to prevent falling through to SPA
@@ -636,49 +620,8 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const LOGO_MIME: Record<string, string> = {
-      '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jfif': 'image/jpeg', '.webp': 'image/webp',
-    };
-
-    // Serve carrier logos: try local filesystem first (multiple layouts), then jsDelivr CDN.
-    app.get('/carrier-logos/:filename', async (req, res) => {
-      const filename = req.params.filename;
-      const mimeType = LOGO_MIME[path.extname(filename).toLowerCase()] || 'image/jpeg';
-      const localPaths = [
-        path.join(__dirname, 'public', 'carrier-logos', filename),
-        path.join(__dirname, 'dist',   'carrier-logos', filename),
-        path.join(process.cwd(), 'public', 'carrier-logos', filename),
-        path.join(process.cwd(), 'dist',   'carrier-logos', filename),
-        path.join('/app', 'public', 'carrier-logos', filename),
-        path.join('/app', 'dist',   'carrier-logos', filename),
-      ];
-      for (const p of localPaths) {
-        try {
-          const stat = fs.statSync(p);
-          if (stat.size > 100) {
-            res.setHeader('Content-Type', mimeType);
-            res.setHeader('Cache-Control', 'public, max-age=86400');
-            console.log(`[logo] serving local: ${p}`);
-            return fs.createReadStream(p).pipe(res as any);
-          }
-        } catch { /* path doesn't exist, try next */ }
-      }
-      // Fallback: jsDelivr CDN (serves GitHub files with correct Content-Type, no auth required)
-      console.log(`[logo] local not found for ${filename}, falling back to jsDelivr`);
-      try {
-        const cdnUrl = `https://cdn.jsdelivr.net/gh/ReduceMyIns/RMI-Website@main/public/carrier-logos/${encodeURIComponent(filename)}`;
-        const cdnRes = await fetch(cdnUrl);
-        if (!cdnRes.ok) { res.status(404).end(); return; }
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-        res.send(Buffer.from(await cdnRes.arrayBuffer()));
-      } catch (e) {
-        console.error(`[logo] CDN fallback failed for ${filename}:`, e);
-        res.status(500).end();
-      }
-    });
-
+    // Serve all static assets from dist/ (Vite copies public/ including carrier-logos/ here at build time).
+    // setHeaders fixes .jfif files which have no standard MIME type in Node's mime database.
     app.use(express.static(path.join(__dirname, "dist"), {
       setHeaders(res, filePath) {
         if (filePath.endsWith('.jfif')) {
