@@ -415,7 +415,7 @@ export const analyzeInspectionPhoto = async (
   }
 };
 
-export const connectInspectionSession = (pendingItems: string[], currentFocus: string, callbacks: any) => {
+export const connectInspectionSession = async (pendingItems: string[], currentFocus: string, callbacks: any) => {
     const ai = await getAi();
     return ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
