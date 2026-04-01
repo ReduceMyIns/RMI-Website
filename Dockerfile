@@ -24,8 +24,8 @@ RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy the Vite-built frontend from builder
 COPY --from=builder /app/dist ./dist
-# Copy carrier logos directly from build context (bypasses Vite entirely — guaranteed to work)
-COPY public/carrier-logos ./public/carrier-logos
+# Guarantee carrier logos are in dist/carrier-logos/ regardless of Vite copy behavior
+COPY public/carrier-logos ./dist/carrier-logos
 
 # Copy all server-side source files
 COPY server.ts .
@@ -36,7 +36,6 @@ COPY services/ ./services/
 COPY src/ ./src/
 COPY data/ ./data/
 
-# Cloud Run provides PORT env var; default to 3000 to match AI Studio config
 ENV NODE_ENV=production
 # PORT is injected by Cloud Run (defaults to 8080); server.ts reads process.env.PORT
 EXPOSE 8080
